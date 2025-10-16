@@ -12,9 +12,9 @@ from logger import logger, log_error, log_overseerr_call
 from media_backends import get_backend, MediaBackendError, MediaBackendConnectionError, MediaBackendAuthError
 
 # Use configuration instead of direct env vars
-BASE = Config.OVERSEERR_BASE_URL.rstrip("/")
-API_KEY = Config.OVERSEERR_API_KEY
-MOCK = Config.MOCK_OVERSEERR
+BASE = Config.MEDIA_BACKEND_URL.rstrip("/")
+API_KEY = Config.MEDIA_BACKEND_API_KEY
+MOCK = Config.MOCK_BACKEND
 
 HEADERS = {
     "X-Api-Key": API_KEY,

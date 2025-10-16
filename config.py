@@ -25,9 +25,9 @@ class Config:
     PUBLIC_BASE_URL: Optional[str]
 
     # Media Backend (supports Overseerr, Jellyseerr, Ombi)
-    OVERSEERR_BASE_URL: str  # Kept for backward compatibility
-    OVERSEERR_API_KEY: str   # Kept for backward compatibility
-    MOCK_OVERSEERR: bool     # Kept for backward compatibility
+    MEDIA_BACKEND_URL: str
+    MEDIA_BACKEND_API_KEY: str
+    MOCK_BACKEND: bool
 
     # Database
     DATABASE_URL: str
@@ -48,40 +48,16 @@ class Config:
         cls.SECRET_KEY = cls._get_required("SECRET_KEY", warn_on_default=True)
         cls.PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL")
 
-        # Media Backend configuration (supports both new and legacy variable names)
-        # New variable names: MEDIA_BACKEND_URL, MEDIA_BACKEND_API_KEY, MOCK_BACKEND
-        # Legacy names: OVERSEERR_BASE_URL, OVERSEERR_API_KEY, MOCK_OVERSEERR
-        cls.MOCK_OVERSEERR = (
-            os.getenv("MOCK_BACKEND", os.getenv("MOCK_OVERSEERR", "false")).lower()
-            in {"1", "true", "yes", "on"}
-        )
+        # Media Backend configuration
+        cls.MOCK_BACKEND = os.getenv("MOCK_BACKEND", "false").lower() in {"1", "true", "yes", "on"}
 
-        if cls.MOCK_OVERSEERR:
+        if cls.MOCK_BACKEND:
             logger.warning("Running in MOCK mode - no real backend API calls will be made")
-            cls.OVERSEERR_BASE_URL = os.getenv(
-                "MEDIA_BACKEND_URL",
-                os.getenv("OVERSEERR_BASE_URL", "http://localhost:5055")
-            )
-            cls.OVERSEERR_API_KEY = os.getenv(
-                "MEDIA_BACKEND_API_KEY",
-                os.getenv("OVERSEERR_API_KEY", "mock-key")
-            )
+            cls.MEDIA_BACKEND_URL = os.getenv("MEDIA_BACKEND_URL", "http://localhost:5055")
+            cls.MEDIA_BACKEND_API_KEY = os.getenv("MEDIA_BACKEND_API_KEY", "mock-key")
         else:
-            # Try new variable names first, fall back to legacy names
-            cls.OVERSEERR_BASE_URL = (
-                os.getenv("MEDIA_BACKEND_URL") or
-                cls._get_required("OVERSEERR_BASE_URL")
-            )
-            cls.OVERSEERR_API_KEY = (
-                os.getenv("MEDIA_BACKEND_API_KEY") or
-                cls._get_required("OVERSEERR_API_KEY")
-            )
-
-            # Log which variable names are being used
-            if os.getenv("MEDIA_BACKEND_URL"):
-                logger.info("Using new environment variable names (MEDIA_BACKEND_*)")
-            else:
-                logger.info("Using legacy environment variable names (OVERSEERR_*) - consider migrating to MEDIA_BACKEND_*")
+            cls.MEDIA_BACKEND_URL = cls._get_required("MEDIA_BACKEND_URL")
+            cls.MEDIA_BACKEND_API_KEY = cls._get_required("MEDIA_BACKEND_API_KEY")
 
         # Database
         cls.DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./overtalkerr.db")
@@ -100,7 +76,7 @@ class Config:
 
         logger.info("Configuration loaded successfully", extra={
             "flask_env": cls.FLASK_ENV,
-            "mock_mode": cls.MOCK_OVERSEERR,
+            "mock_mode": cls.MOCK_BACKEND,
             "database": cls.DATABASE_URL.split("://")[0],  # Just show db type
             "session_ttl_hours": cls.SESSION_TTL_HOURS,
         })
@@ -126,8 +102,8 @@ class Config:
             if cls.FLASK_ENV == "production" and not cls.PUBLIC_BASE_URL.startswith("https://"):
                 logger.warning("PUBLIC_BASE_URL should use HTTPS in production")
 
-        if not cls.MOCK_OVERSEERR:
-            if not cls.OVERSEERR_BASE_URL.startswith(("http://", "https://")):
+        if not cls.MOCK_BACKEND:
+            if not cls.MEDIA_BACKEND_URL.startswith(("http://", "https://")):
                 raise ConfigError("MEDIA_BACKEND_URL must start with http:// or https://")
 
         # Validate TTL
@@ -148,31 +124,31 @@ class Config:
         Returns:
             True if connection successful, False otherwise
         """
-        if cls.MOCK_OVERSEERR:
+        if cls.MOCK_BACKEND:
             logger.info("Skipping connectivity check (mock mode)")
             return True
 
         try:
             import requests
-            url = f"{cls.OVERSEERR_BASE_URL}/api/v1/status"
-            headers = {"X-Api-Key": cls.OVERSEERR_API_KEY}
+            url = f"{cls.MEDIA_BACKEND_URL}/api/v1/status"
+            headers = {"X-Api-Key": cls.MEDIA_BACKEND_API_KEY}
             response = requests.get(url, headers=headers, timeout=5)
 
             if response.ok:
                 logger.info("Media backend connectivity check passed", extra={
-                    "url": cls.OVERSEERR_BASE_URL,
+                    "url": cls.MEDIA_BACKEND_URL,
                     "status": response.status_code
                 })
                 return True
             else:
                 logger.error("Media backend connectivity check failed", extra={
-                    "url": cls.OVERSEERR_BASE_URL,
+                    "url": cls.MEDIA_BACKEND_URL,
                     "status": response.status_code
                 })
                 return False
         except Exception as e:
             logger.error("Failed to connect to media backend", extra={
-                "url": cls.OVERSEERR_BASE_URL,
+                "url": cls.MEDIA_BACKEND_URL,
                 "error": str(e)
             })
             return False

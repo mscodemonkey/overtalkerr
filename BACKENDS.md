@@ -67,8 +67,6 @@ MEDIA_BACKEND_API_KEY=your-api-key-here
 MOCK_BACKEND=false
 ```
 
-**Legacy Variable Names:** If you're migrating from an older version, the legacy variable names (`OVERSEERR_BASE_URL`, `OVERSEERR_API_KEY`, `MOCK_OVERSEERR`) are still supported for backward compatibility. However, we recommend using the new generic names.
-
 ### Step 3: Start Overtalkerr
 
 When Overtalkerr starts, it will automatically detect which backend you're using:
@@ -196,7 +194,7 @@ Example log output:
 You can test Overtalkerr without a real backend:
 
 ```bash
-MOCK_OVERSEERR=true
+MOCK_BACKEND=true
 ```
 
 This will:
@@ -212,8 +210,8 @@ This will:
 **Cause:** Auto-detection failed to connect to any backend API.
 
 **Solutions:**
-1. Check your `OVERSEERR_BASE_URL` is correct
-2. Verify your `OVERSEERR_API_KEY` is valid
+1. Check your `MEDIA_BACKEND_URL` is correct
+2. Verify your `MEDIA_BACKEND_API_KEY` is valid
 3. Ensure the backend is accessible from Overtalkerr
 4. Check firewall rules
 5. Review logs for connection errors
@@ -389,29 +387,7 @@ retry_strategy = Retry(
 )
 ```
 
-## Migrating to New Variable Names
-
-If you're upgrading from an older version of Overtalkerr that used `OVERSEERR_*` variable names:
-
-**Option 1: Use New Variable Names (Recommended)**
-```bash
-# Update your .env file
-MEDIA_BACKEND_URL=https://request.example.com      # was OVERSEERR_BASE_URL
-MEDIA_BACKEND_API_KEY=your-api-key-here            # was OVERSEERR_API_KEY
-MOCK_BACKEND=false                                 # was MOCK_OVERSEERR
-```
-
-**Option 2: Keep Using Legacy Names**
-```bash
-# Old variable names still work!
-OVERSEERR_BASE_URL=https://request.example.com
-OVERSEERR_API_KEY=your-api-key-here
-MOCK_OVERSEERR=false
-```
-
-Both options work identically. The new names are preferred for clarity since we now support multiple backends.
-
-## Migration Between Backends
+## Switching Between Backends
 
 If you're switching from one backend to another:
 

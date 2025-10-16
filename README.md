@@ -85,7 +85,7 @@ The backend automatically detects your media request service (Overseerr, Jellyse
 ### 1. Clone and Configure
 
 ```bash
-git clone <repository-url>
+git clone <repository-url> overtalkerr
 cd overtalkerr
 
 # Copy environment template
@@ -251,8 +251,9 @@ All configuration is managed through environment variables in `.env`:
 ### Required Settings
 
 ```bash
-OVERSEERR_BASE_URL=https://your-overseerr-instance.com
-OVERSEERR_API_KEY=your-api-key-here
+# Your media request backend (Overseerr, Jellyseerr, or Ombi)
+MEDIA_BACKEND_URL=https://your-backend-instance.com
+MEDIA_BACKEND_API_KEY=your-api-key-here
 SECRET_KEY=your-random-secret-key
 ```
 
@@ -263,13 +264,13 @@ SECRET_KEY=your-random-secret-key
 FLASK_ENV=development
 LOG_FORMAT=text
 LOG_LEVEL=DEBUG
-MOCK_OVERSEERR=true
+MOCK_BACKEND=true
 
 # Production
 FLASK_ENV=production
 LOG_FORMAT=json
 LOG_LEVEL=INFO
-MOCK_OVERSEERR=false
+MOCK_BACKEND=false
 
 # Database
 DATABASE_URL=sqlite:///./overtalkerr.db
@@ -309,7 +310,9 @@ your.domain {
 
 - If Alexa says it can't reach the skill, confirm your endpoint is publicly reachable over HTTPS with a valid cert.
 - Check container logs: `docker logs -f overtalkerr`.
-- Verify Overseerr API with curl: `curl -H "X-Api-Key: $OVERSEERR_API_KEY" "${OVERSEERR_BASE_URL}/api/v1/search?query=jurassic"`.
+- Verify backend API connection:
+  - Overseerr/Jellyseerr: `curl -H "X-Api-Key: $MEDIA_BACKEND_API_KEY" "${MEDIA_BACKEND_URL}/api/v1/search?query=jurassic"`
+  - Ombi: `curl -H "ApiKey: $MEDIA_BACKEND_API_KEY" "${MEDIA_BACKEND_URL}/api/v1/Search/movie/jurassic"`
 
 ## Local test harness (no Alexa device required)
 
@@ -332,10 +335,10 @@ REST endpoints (for curl/Postman):
 
 ## Mock mode
 
-Enable mocked Overseerr behavior (no outbound API calls):
+Enable mocked backend behavior (no outbound API calls):
 
 ```
-MOCK_OVERSEERR=true
+MOCK_BACKEND=true
 ```
 
 The UI banner at `/test` shows whether mock mode is ON or OFF.

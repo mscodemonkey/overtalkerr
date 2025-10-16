@@ -482,8 +482,8 @@ class BackendFactory:
         Returns:
             MediaBackend instance
         """
-        base_url = base_url or Config.OVERSEERR_BASE_URL
-        api_key = api_key or Config.OVERSEERR_API_KEY
+        base_url = base_url or Config.MEDIA_BACKEND_URL
+        api_key = api_key or Config.MEDIA_BACKEND_API_KEY
 
         # Auto-detect if not specified
         if backend_type is None:
@@ -509,10 +509,10 @@ def get_backend() -> MediaBackend:
     global _backend_instance
 
     if _backend_instance is None:
-        if Config.MOCK_OVERSEERR:
+        if Config.MOCK_BACKEND:
             logger.info("Mock mode enabled - using mock backend")
             # For mock mode, just use Overseerr backend (it handles mocking internally)
-            _backend_instance = OverseerrBackend(Config.OVERSEERR_BASE_URL, Config.OVERSEERR_API_KEY)
+            _backend_instance = OverseerrBackend(Config.MEDIA_BACKEND_URL, Config.MEDIA_BACKEND_API_KEY)
         else:
             _backend_instance = BackendFactory.create()
             logger.info(f"Initialized {type(_backend_instance).__name__}")

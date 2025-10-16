@@ -2,6 +2,8 @@
 
 Request movies and TV shows using **Alexa**, **Google Assistant**, or **Siri**! 🎙️
 
+> **⚠️ BETA SOFTWARE**: Overtalkerr is currently in beta testing. While we've worked hard to make it stable and feature-complete, please use at your own risk and report any issues you encounter on [GitHub Issues](https://github.com/mscodemonkey/overtalkerr/issues). Your feedback helps make it better!
+
 > **🚀 Proxmox Users**: Install in seconds with our LXC helper script! See [PROXMOX.md](PROXMOX.md)
 
 A self-hostable multi-platform voice assistant backend that works with **Overseerr**, **Jellyseerr**, and **Ombi**:

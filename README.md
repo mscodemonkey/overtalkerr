@@ -2,6 +2,8 @@
 
 Request movies and TV shows using **Alexa**, **Google Assistant**, or **Siri**! 🎙️
 
+> **🚀 Proxmox Users**: Install in seconds with our LXC helper script! See [PROXMOX.md](PROXMOX.md)
+
 A self-hostable multi-platform voice assistant backend that works with **Overseerr**, **Jellyseerr**, and **Ombi**:
 
 **🔵 Alexa:**
@@ -97,7 +99,19 @@ cp .env.example .env
 nano .env
 ```
 
-### 2. Option A: Docker (Recommended)
+### 2. Choose Your Deployment Method
+
+#### Option A: Proxmox VE (Easiest for Homelab)
+
+Perfect for homelab users! One-command LXC container installation:
+
+```bash
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
+```
+
+This creates a lightweight LXC container with everything pre-configured. See **[PROXMOX.md](PROXMOX.md)** for full details.
+
+#### Option B: Docker (Recommended)
 
 ```bash
 # Build the image
@@ -115,7 +129,7 @@ docker run -d \
 docker logs -f overtalkerr
 ```
 
-### 2. Option B: Local Python
+### 2. Option C: Local Python
 
 ```bash
 # Create virtual environment

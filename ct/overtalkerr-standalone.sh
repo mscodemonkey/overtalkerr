@@ -54,7 +54,26 @@ RAM="1024"
 BRIDGE="vmbr0"
 OS_TYPE="debian"
 OS_VERSION="12"
-STORAGE="local-lxc"
+
+# Auto-detect available storage for containers
+# Try common storage options in order of preference
+STORAGE=""
+for storage in "local-lxc" "local" "local-zfs" "local-btrfs"; do
+    if pvesm status | grep -q "^${storage} "; then
+        # Check if this storage supports container content
+        if pvesm status | grep "^${storage} " | grep -q "rootdir\|images"; then
+            STORAGE="$storage"
+            break
+        fi
+    fi
+done
+
+if [ -z "$STORAGE" ]; then
+    msg_error "No suitable storage found for containers"
+    msg_info "Available storage:"
+    pvesm status
+    exit 1
+fi
 
 # Show banner
 clear
@@ -85,6 +104,7 @@ echo -e "${BLUE}Configuration:${NC}"
 echo -e "  Container ID: ${GREEN}${CTID}${NC}"
 echo -e "  Hostname: ${GREEN}${HOSTNAME}${NC}"
 echo -e "  OS: ${GREEN}Debian ${OS_VERSION}${NC}"
+echo -e "  Storage: ${GREEN}${STORAGE}${NC}"
 echo -e "  Disk: ${GREEN}${DISK_SIZE}GB${NC}"
 echo -e "  Cores: ${GREEN}${CORES}${NC}"
 echo -e "  RAM: ${GREEN}${RAM}MB${NC}"

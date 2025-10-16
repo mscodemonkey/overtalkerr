@@ -70,6 +70,18 @@
     button.secondary:hover { background: #4b5563; }
     button.danger { background: #ef4444; }
     button.danger:hover { background: #dc2626; }
+    .nav-link {
+      display: inline-block;
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .nav-link:hover {
+      color: #2563eb;
+    }
     .row { display: flex; gap: 12px; }
     .row > div { flex: 1; }
     pre {
@@ -153,6 +165,8 @@
 </head>
 <body>
   <div class="card">
+    <a href="/" class="nav-link">← Back to Dashboard</a>
+
     <h2>Overtalkerr Test UI</h2>
     <div class="status-bar">
       <div id="banner" class="pill">

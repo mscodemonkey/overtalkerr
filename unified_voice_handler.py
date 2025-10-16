@@ -474,39 +474,8 @@ class UnifiedVoiceHandler:
 
             # If we have both movies and TV shows
             if len(media_types_in_results) > 1 and 'movie' in media_types_in_results and 'tv' in media_types_in_results:
-                # Find the newest result (by release date)
-                newest = None
-                newest_date = None
-                for result in ranked:
-                    release_date_str = result.get('_releaseDate')
-                    if release_date_str:
-                        try:
-                            from datetime import datetime
-                            release_date = datetime.fromisoformat(release_date_str.replace('Z', '+00:00'))
-                            if newest_date is None or release_date > newest_date:
-                                newest_date = release_date
-                                newest = result
-                        except:
-                            pass
-
-                # If we couldn't determine by date, use first result
-                if not newest:
-                    newest = ranked[0]
-
-                newest_type = newest.get('_mediaType')
-                newest_title = newest.get('_title') or newest.get('title') or newest.get('name')
-                year = None
-                if newest.get('_releaseDate'):
-                    year = newest['_releaseDate'][:4]
-
-                # Determine term to use
-                type_term = user_term if user_term else ('movie' if newest_type == 'movie' else 'TV show')
-
-                # Ask clarification based on newest result type
-                if year:
-                    speech = f"Is it a {type_term} named {newest_title} from {year} you're looking for?"
-                else:
-                    speech = f"Is it a {type_term} named {newest_title} you're looking for?"
+                # Ask a simple, general question about media type first
+                speech = f"I have both movies and TV shows available. Is it a movie called {media_title} you're looking for?"
 
                 # Save state with pending clarification
                 state = {
@@ -519,13 +488,13 @@ class UnifiedVoiceHandler:
                     'index': 0,
                     'user_term': user_term,
                     'pending_media_type_clarification': True,
-                    'clarification_type': newest_type,  # Type we asked about
+                    'clarification_type': 'movie',  # We're asking if it's a movie
                 }
                 save_state(request.user_id, request.session_id, state)
 
                 return VoiceResponse(
                     speech=speech,
-                    reprompt=f"Is it the {type_term} {newest_title}?",
+                    reprompt=f"Is it a movie or TV show?",
                     card_title="Overtalkerr",
                     card_text=speech
                 )

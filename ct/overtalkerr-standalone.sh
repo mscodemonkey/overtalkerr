@@ -198,8 +198,13 @@ msg_ok "Container is running"
 # Install dependencies
 msg_info "Installing dependencies..."
 pct exec "$CTID" -- bash -c "
+    # Set locale to avoid warnings
+    export DEBIAN_FRONTEND=noninteractive
+    export LC_ALL=C
+    export LANG=C
+
     apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    apt-get install -y \
         curl \
         sudo \
         git \
@@ -207,7 +212,12 @@ pct exec "$CTID" -- bash -c "
         python3-pip \
         python3-venv \
         ca-certificates \
-        build-essential
+        build-essential \
+        locales
+
+    # Generate en_US.UTF-8 locale
+    echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen
+    locale-gen
 " || {
     msg_error "Failed to install dependencies"
     exit 1
@@ -225,7 +235,13 @@ msg_ok "Virtual environment created"
 # Clone repository and install
 msg_info "Installing Overtalkerr..."
 pct exec "$CTID" -- bash -c "
-    cd /opt && \
+    cd /opt
+
+    # Remove existing directory if it exists (from previous failed install)
+    if [ -d overtalkerr ]; then
+        rm -rf overtalkerr
+    fi
+
     git clone https://github.com/mscodemonkey/overtalkerr.git && \
     cd overtalkerr && \
     /opt/overtalkerr/venv/bin/pip install --upgrade pip && \

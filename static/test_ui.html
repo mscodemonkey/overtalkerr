@@ -228,6 +228,16 @@
       padding: 40px;
       font-size: 14px;
     }
+    .inline-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .inline-buttons button {
+      padding: 6px 16px;
+      font-size: 13px;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -284,8 +294,6 @@
 
     <div class="button-group">
       <button id="btnStart" onclick="startSearch()">🔍 Start Search</button>
-      <button id="btnNo" class="secondary" onclick="sayNo()" disabled>👎 No</button>
-      <button id="btnYes" class="secondary" onclick="sayYes()" disabled>👍 Yes</button>
       <button id="btnReset" class="secondary" onclick="resetConv()" title="Reset this conversation state" disabled>🔄 Reset</button>
       <button id="btnPurge" class="danger" onclick="purgeAll()" title="Purge all saved state">🗑️ Purge All</button>
     </div>
@@ -321,16 +329,25 @@ let currentIndex = 0;
 let totalResults = 0;
 let loading = false;
 let conversationHistory = [];
+let activeButtonMessageId = null;
 
-function addMessageToConversation(text, isUser = false) {
+function addMessageToConversation(text, isUser = false, showButtons = false) {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const msgId = `msg-${Date.now()}-${Math.random()}`;
 
   conversationHistory.push({
+    id: msgId,
     text: text,
     isUser: isUser,
-    time: timeStr
+    time: timeStr,
+    showButtons: showButtons
   });
+
+  // If showing buttons on this message, track it as the active one
+  if (showButtons && !isUser) {
+    activeButtonMessageId = msgId;
+  }
 
   renderConversation();
 }
@@ -343,15 +360,25 @@ function renderConversation() {
     return;
   }
 
-  container.innerHTML = conversationHistory.map(msg => `
-    <div class="message ${msg.isUser ? 'user' : 'assistant'}">
-      <div class="message-avatar">${msg.isUser ? '👤' : '🤖'}</div>
-      <div class="message-content">
-        <p class="message-text">${msg.text}</p>
-        <span class="message-time">${msg.time}</span>
+  container.innerHTML = conversationHistory.map(msg => {
+    const buttonsHtml = (!msg.isUser && msg.showButtons && msg.id === activeButtonMessageId) ? `
+      <div class="inline-buttons">
+        <button class="secondary" onclick="handleInlineYes('${msg.id}')">👍 Yes</button>
+        <button class="secondary" onclick="handleInlineNo('${msg.id}')">👎 No</button>
       </div>
-    </div>
-  `).join('');
+    ` : '';
+
+    return `
+      <div class="message ${msg.isUser ? 'user' : 'assistant'}">
+        <div class="message-avatar">${msg.isUser ? '👤' : '🤖'}</div>
+        <div class="message-content">
+          <p class="message-text">${msg.text}</p>
+          <span class="message-time">${msg.time}</span>
+          ${buttonsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
 
   // Scroll to bottom
   container.scrollTop = container.scrollHeight;
@@ -359,7 +386,28 @@ function renderConversation() {
 
 function clearConversation() {
   conversationHistory = [];
+  activeButtonMessageId = null;
   renderConversation();
+}
+
+function handleInlineYes(msgId) {
+  // Add user's "Yes" response
+  addMessageToConversation('Yes', true);
+  // Clear active buttons
+  activeButtonMessageId = null;
+  renderConversation();
+  // Call the actual Yes handler
+  sayYes();
+}
+
+function handleInlineNo(msgId) {
+  // Add user's "No" response
+  addMessageToConversation('No', true);
+  // Clear active buttons
+  activeButtonMessageId = null;
+  renderConversation();
+  // Call the actual No handler
+  sayNo();
 }
 
 function setSpeech(text, status = '') {
@@ -381,7 +429,6 @@ function setConv(id) {
     convEl.textContent = '(none)';
     convEl.className = 'pill';
   }
-  updateButtons();
 }
 
 function updateResultCounter(index, total) {
@@ -397,20 +444,11 @@ function updateResultCounter(index, total) {
   }
 }
 
-function updateButtons() {
-  const hasConv = !!conversationId;
-  const hasMore = currentIndex < totalResults - 1;
-
-  document.getElementById('btnStart').disabled = loading;
-  document.getElementById('btnNo').disabled = loading || !hasConv || !hasMore;
-  document.getElementById('btnYes').disabled = loading || !hasConv;
-  document.getElementById('btnReset').disabled = loading || !hasConv;
-  document.getElementById('btnPurge').disabled = loading;
-}
-
 function setLoading(isLoading) {
   loading = isLoading;
-  updateButtons();
+  document.getElementById('btnStart').disabled = loading;
+  document.getElementById('btnReset').disabled = loading || !conversationId;
+  document.getElementById('btnPurge').disabled = loading;
 }
 
 async function startSearch() {
@@ -447,7 +485,7 @@ async function startSearch() {
 
     if (!res.ok) {
       setSpeech('Error: ' + (data.error || res.statusText));
-      addMessageToConversation('Error: ' + (data.error || res.statusText), false);
+      addMessageToConversation('Error: ' + (data.error || res.statusText), false, false);
       setDebug(data);
       const banner = document.getElementById('banner');
       banner.className = 'pill error';
@@ -456,13 +494,15 @@ async function startSearch() {
     } else {
       setConv(data.conversationId);
       setSpeech(data.speech);
-      addMessageToConversation(data.speech, false);
+      // Show buttons if there's an active conversation
+      const showButtons = data.conversationId && !data.speech.includes('already in your library');
+      addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       updateResultCounter(data.index, data.total);
     }
   } catch (e) {
     setSpeech('Network error: ' + e.message);
-    addMessageToConversation('Network error: ' + e.message, false);
+    addMessageToConversation('Network error: ' + e.message, false, false);
     setDebug({ error: e.message });
   } finally {
     setLoading(false);
@@ -472,7 +512,7 @@ async function startSearch() {
 async function sayYes() {
   if (!conversationId) { setSpeech('Start a search first.'); return; }
 
-  addMessageToConversation('Yes', true);
+  // Don't add "Yes" here - it's already added by handleInlineYes
 
   setLoading(true);
   setSpeech('Creating request...', 'loading');
@@ -487,11 +527,13 @@ async function sayYes() {
 
     if (!res.ok) {
       setSpeech('Error: ' + (data.error || res.statusText));
-      addMessageToConversation('Error: ' + (data.error || res.statusText), false);
+      addMessageToConversation('Error: ' + (data.error || res.statusText), false, false);
       setDebug(data);
     } else {
       setSpeech(data.speech);
-      addMessageToConversation(data.speech, false);
+      // Show buttons only if conversation continues
+      const showButtons = data.conversationId && !data.speech.includes('requested') && !data.speech.includes('already');
+      addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       // Reset conversation after successful request
       if (data.speech.includes('done') || data.requested) {
@@ -503,7 +545,7 @@ async function sayYes() {
     }
   } catch (e) {
     setSpeech('Network error: ' + e.message);
-    addMessageToConversation('Network error: ' + e.message, false);
+    addMessageToConversation('Network error: ' + e.message, false, false);
     setDebug({ error: e.message });
   } finally {
     setLoading(false);
@@ -513,7 +555,7 @@ async function sayYes() {
 async function sayNo() {
   if (!conversationId) { setSpeech('Start a search first.'); return; }
 
-  addMessageToConversation('No', true);
+  // Don't add "No" here - it's already added by handleInlineNo
 
   setLoading(true);
   setSpeech('Loading next result...', 'loading');
@@ -528,17 +570,19 @@ async function sayNo() {
 
     if (!res.ok) {
       setSpeech('Error: ' + (data.error || res.statusText));
-      addMessageToConversation('Error: ' + (data.error || res.statusText), false);
+      addMessageToConversation('Error: ' + (data.error || res.statusText), false, false);
       setDebug(data);
     } else {
       setSpeech(data.speech);
-      addMessageToConversation(data.speech, false);
+      // Show buttons unless it's a final message
+      const showButtons = data.conversationId && !data.speech.includes('That\'s all') && !data.speech.includes('Perfect!');
+      addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       updateResultCounter(data.index, data.total);
     }
   } catch (e) {
     setSpeech('Network error: ' + e.message);
-    addMessageToConversation('Network error: ' + e.message, false);
+    addMessageToConversation('Network error: ' + e.message, false, false);
     setDebug({ error: e.message });
   } finally {
     setLoading(false);

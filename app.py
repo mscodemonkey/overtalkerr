@@ -72,27 +72,27 @@ def get_stats():
         stats = {}
 
         # Backend status
-        try:
-            # Check if backend is configured
-            if not Config.MEDIA_BACKEND_URL or Config.MEDIA_BACKEND_URL == 'http://your-backend-url:5055':
-                stats['backend_connected'] = False
-                stats['backend_type'] = 'Not Configured'
-                stats['backend_configured'] = False
-            else:
-                backend = get_backend()
-                # Try to actually connect
-                if Config.check_connectivity():
-                    stats['backend_connected'] = True
-                    stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
-                    stats['backend_configured'] = True
-                else:
-                    stats['backend_connected'] = False
-                    stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
-                    stats['backend_configured'] = True
-        except Exception as e:
+        # Check if backend is configured
+        if not Config.MEDIA_BACKEND_URL or Config.MEDIA_BACKEND_URL == 'http://your-backend-url:5055':
             stats['backend_connected'] = False
-            stats['backend_type'] = 'Error'
+            stats['backend_type'] = 'Not Configured'
             stats['backend_configured'] = False
+        else:
+            stats['backend_configured'] = True
+            try:
+                backend = get_backend()
+                stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
+
+                # Try to actually connect
+                try:
+                    stats['backend_connected'] = Config.check_connectivity()
+                except Exception as conn_err:
+                    logger.warning(f"Backend connectivity check failed: {conn_err}")
+                    stats['backend_connected'] = False
+            except Exception as e:
+                logger.error(f"Failed to get backend: {e}")
+                stats['backend_connected'] = False
+                stats['backend_type'] = 'Unknown'
 
         # Database stats
         with db_session() as session:

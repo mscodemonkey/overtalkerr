@@ -1,0 +1,71 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "overtalkerr",
+      "intents": [
+        {
+          "name": "DownloadIntent",
+          "slots": [
+            {
+              "name": "MediaTitle",
+              "type": "AMAZON.Movie"
+            },
+            {
+              "name": "Year",
+              "type": "AMAZON.FOUR_DIGIT_NUMBER"
+            },
+            {
+              "name": "MediaType",
+              "type": "MediaType"
+            },
+            {
+              "name": "Upcoming",
+              "type": "AMAZON.SearchQuery"
+            },
+            {
+              "name": "Season",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "download {MediaTitle}",
+            "download the {MediaTitle}",
+            "download {MediaType} {MediaTitle}",
+            "download the {MediaType} {MediaTitle}",
+            "download {MediaTitle} from {Year}",
+            "download the {MediaType} {MediaTitle} from {Year}",
+            "download the upcoming {MediaType} {MediaTitle}",
+            "download the upcoming {MediaType}",
+            "download the upcoming {MediaTitle}",
+            "download the {MediaTitle} {MediaType}",
+            "download the upcoming {MediaTitle} {MediaType}",
+            "download upcoming {MediaType} {MediaTitle}",
+            "download upcoming {MediaTitle}",
+            "download season {Season} of {MediaTitle}",
+            "download {MediaTitle} season {Season}",
+            "download the {MediaType} {MediaTitle} season {Season}",
+            "request {MediaTitle}",
+            "request the {MediaType} {MediaTitle}",
+            "get {MediaTitle}",
+            "get the {MediaType} {MediaTitle}"
+          ]
+        },
+        { "name": "AMAZON.YesIntent", "samples": [] },
+        { "name": "AMAZON.NoIntent", "samples": [] },
+        { "name": "AMAZON.HelpIntent", "samples": [] },
+        { "name": "AMAZON.FallbackIntent", "samples": [] },
+        { "name": "AMAZON.CancelIntent", "samples": [] },
+        { "name": "AMAZON.StopIntent", "samples": [] }
+      ],
+      "types": [
+        {
+          "name": "MediaType",
+          "values": [
+            { "name": { "value": "movie", "synonyms": ["film", "motion picture"] } },
+            { "name": { "value": "tv show", "synonyms": ["series", "television show", "tv series", "show"] } }
+          ]
+        }
+      ]
+    }
+  }
+}

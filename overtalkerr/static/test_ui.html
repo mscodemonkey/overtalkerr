@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overtalkerr Test UI</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 20px;
+      background: #f9fafb;
+    }
+    .card {
+      max-width: 820px;
+      margin: 0 auto;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      background: white;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #374151;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px 12px;
+      margin-top: 6px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    button {
+      padding: 10px 18px;
+      margin-top: 16px;
+      margin-right: 8px;
+      border: none;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    button.secondary { background: #6b7280; }
+    button.secondary:hover { background: #4b5563; }
+    button.danger { background: #ef4444; }
+    button.danger:hover { background: #dc2626; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    pre {
+      background: #0b1020;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .pill {
+      display: inline-block;
+      background: #eef2ff;
+      color: #3730a3;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .pill.success { background: #d1fae5; color: #065f46; }
+    .pill.warning { background: #fef3c7; color: #92400e; }
+    .pill.error { background: #fee2e2; color: #991b1b; }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f3f4f6;
+      border-radius: 8px;
+    }
+    .result-counter {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 600;
+    }
+    h2 {
+      margin: 0 0 8px 0;
+      color: #111827;
+      font-size: 24px;
+    }
+    h3 {
+      margin: 24px 0 8px 0;
+      color: #374151;
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .description {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden { display: none; }
+    .button-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Overtalkerr Test UI</h2>
+    <div class="status-bar">
+      <div id="banner" class="pill">
+        <span class="loading"></span> Loading environment info…
+      </div>
+      <div id="resultCounter" class="result-counter hidden"></div>
+    </div>
+
+    <p class="description">
+      Simulate the Alexa flow without a device. Start a search, then confirm Yes/No to iterate results.
+      When you confirm Yes, a request will be sent to Overseerr (or mocked if mock mode is on).
+    </p>
+
+    <div class="row">
+      <div>
+        <label>Title</label>
+        <input id="title" placeholder="Jurassic World" />
+      </div>
+      <div>
+        <label>Year (optional)</label>
+        <input id="year" placeholder="2015" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Media Type</label>
+        <select id="mediaType">
+          <option value="">Auto (mixed)</option>
+          <option value="movie">Movie</option>
+          <option value="tv">TV show</option>
+        </select>
+      </div>
+      <div>
+        <label>Upcoming</label>
+        <select id="upcoming">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button id="btnStart" onclick="startSearch()">🔍 Start Search</button>
+      <button id="btnNo" class="secondary" onclick="sayNo()" disabled>👎 No</button>
+      <button id="btnYes" class="secondary" onclick="sayYes()" disabled>👍 Yes</button>
+      <button id="btnReset" class="secondary" onclick="resetConv()" title="Reset this conversation state" disabled>🔄 Reset</button>
+      <button id="btnPurge" class="danger" onclick="purgeAll()" title="Purge all saved state">🗑️ Purge All</button>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <strong>Conversation:</strong> <span id="conv" class="pill">(none)</span>
+    </div>
+
+    <h3>
+      💬 Speech Response
+      <span id="speechStatus"></span>
+    </h3>
+    <pre id="speech">(No response yet)</pre>
+
+    <h3>🐛 Debug Info</h3>
+    <pre id="debug">{}</pre>
+  </div>
+
+<script>
+let userId = 'test-user';
+let conversationId = null;
+let currentIndex = 0;
+let totalResults = 0;
+let loading = false;
+
+function setSpeech(text, status = '') {
+  document.getElementById('speech').textContent = text || '(No response yet)';
+  document.getElementById('speechStatus').innerHTML = status ? `<span class="loading"></span>` : '';
+}
+
+function setDebug(obj) {
+  document.getElementById('debug').textContent = JSON.stringify(obj, null, 2);
+}
+
+function setConv(id) {
+  conversationId = id;
+  const convEl = document.getElementById('conv');
+  if (id) {
+    convEl.textContent = id;
+    convEl.className = 'pill success';
+  } else {
+    convEl.textContent = '(none)';
+    convEl.className = 'pill';
+  }
+  updateButtons();
+}
+
+function updateResultCounter(index, total) {
+  currentIndex = index !== undefined ? index : currentIndex;
+  totalResults = total !== undefined ? total : totalResults;
+
+  const counter = document.getElementById('resultCounter');
+  if (totalResults > 0) {
+    counter.textContent = `Result ${currentIndex + 1} of ${totalResults}`;
+    counter.classList.remove('hidden');
+  } else {
+    counter.classList.add('hidden');
+  }
+}
+
+function updateButtons() {
+  const hasConv = !!conversationId;
+  const hasMore = currentIndex < totalResults - 1;
+
+  document.getElementById('btnStart').disabled = loading;
+  document.getElementById('btnNo').disabled = loading || !hasConv || !hasMore;
+  document.getElementById('btnYes').disabled = loading || !hasConv;
+  document.getElementById('btnReset').disabled = loading || !hasConv;
+  document.getElementById('btnPurge').disabled = loading;
+}
+
+function setLoading(isLoading) {
+  loading = isLoading;
+  updateButtons();
+}
+
+async function startSearch() {
+  const title = document.getElementById('title').value.trim();
+  const year = document.getElementById('year').value.trim();
+  const mt = document.getElementById('mediaType').value;
+  const upcoming = document.getElementById('upcoming').value === 'true';
+
+  if (!title) {
+    setSpeech('Please enter a title.');
+    const banner = document.getElementById('banner');
+    banner.className = 'pill error';
+    banner.textContent = 'Error: Title required';
+    setTimeout(() => loadInfo(), 2000);
+    return;
+  }
+
+  setLoading(true);
+  setSpeech('Searching...', 'loading');
+
+  try {
+    const res = await fetch('/test/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, conversationId, title, year: year || null, mediaType: mt || null, upcoming })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setSpeech('Error: ' + (data.error || res.statusText));
+      setDebug(data);
+      const banner = document.getElementById('banner');
+      banner.className = 'pill error';
+      banner.textContent = 'Error: ' + (data.error || res.statusText);
+      setTimeout(() => loadInfo(), 3000);
+    } else {
+      setConv(data.conversationId);
+      setSpeech(data.speech);
+      setDebug(data);
+      updateResultCounter(data.index, data.total);
+    }
+  } catch (e) {
+    setSpeech('Network error: ' + e.message);
+    setDebug({ error: e.message });
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function sayYes() {
+  if (!conversationId) { setSpeech('Start a search first.'); return; }
+
+  setLoading(true);
+  setSpeech('Creating request...', 'loading');
+
+  try {
+    const res = await fetch('/test/yes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, conversationId })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setSpeech('Error: ' + (data.error || res.statusText));
+      setDebug(data);
+    } else {
+      setSpeech(data.speech);
+      setDebug(data);
+      // Reset conversation after successful request
+      if (data.speech.includes('done') || data.requested) {
+        setTimeout(() => {
+          setConv(null);
+          updateResultCounter(0, 0);
+        }, 1500);
+      }
+    }
+  } catch (e) {
+    setSpeech('Network error: ' + e.message);
+    setDebug({ error: e.message });
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function sayNo() {
+  if (!conversationId) { setSpeech('Start a search first.'); return; }
+
+  setLoading(true);
+  setSpeech('Loading next result...', 'loading');
+
+  try {
+    const res = await fetch('/test/no', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, conversationId })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setSpeech('Error: ' + (data.error || res.statusText));
+      setDebug(data);
+    } else {
+      setSpeech(data.speech);
+      setDebug(data);
+      updateResultCounter(data.index, data.total);
+    }
+  } catch (e) {
+    setSpeech('Network error: ' + e.message);
+    setDebug({ error: e.message });
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function resetConv() {
+  if (!conversationId) {
+    setSpeech('No conversation to reset.');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch('/test/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, conversationId })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setSpeech('Reset error: ' + (data.error || res.statusText));
+      setDebug(data);
+    } else {
+      setConv(null);
+      updateResultCounter(0, 0);
+      setSpeech('Conversation reset.');
+      setDebug(data);
+    }
+  } catch (e) {
+    setSpeech('Network error: ' + e.message);
+    setDebug({ error: e.message });
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function purgeAll() {
+  if (!confirm('⚠️ Purge all saved conversation state?\n\nThis will delete ALL conversations and cannot be undone.')) return;
+
+  setLoading(true);
+
+  try {
+    const res = await fetch('/test/purge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setSpeech('Purge error: ' + (data.error || res.statusText));
+      setDebug(data);
+    } else {
+      setConv(null);
+      updateResultCounter(0, 0);
+      setSpeech(`All state purged. ${data.deleted} record(s) deleted.`);
+      setDebug(data);
+    }
+  } catch (e) {
+    setSpeech('Network error: ' + e.message);
+    setDebug({ error: e.message });
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function loadInfo() {
+  try {
+    const res = await fetch('/test/info');
+    const info = await res.json();
+    const banner = document.getElementById('banner');
+
+    const mock = info.mock ? 'ON' : 'OFF';
+    const auth = info.authProtected ? 'Protected' : 'Local';
+
+    if (info.mock) {
+      banner.className = 'pill warning';
+      banner.innerHTML = `⚠️ Mock Mode: ${mock} · Auth: ${auth}`;
+    } else {
+      banner.className = 'pill success';
+      banner.innerHTML = `✅ Mock Mode: ${mock} · Auth: ${auth}`;
+    }
+  } catch (e) {
+    const banner = document.getElementById('banner');
+    banner.className = 'pill error';
+    banner.innerHTML = '❌ Could not load environment info';
+  }
+}
+
+// Load environment info on page load
+loadInfo();
+
+// Enable Enter key to start search
+document.getElementById('title').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !loading) startSearch();
+});
+document.getElementById('year').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !loading) startSearch();
+});
+</script>
+</body>
+</html>

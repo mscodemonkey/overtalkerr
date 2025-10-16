@@ -32,6 +32,19 @@ class DateTimeEncoder(json.JSONEncoder):
 # Helper Functions
 # ==========================================
 
+def get_varied_ok() -> str:
+    """Get a varied 'OK' response to sound more natural"""
+    import random
+    responses = [
+        "Alright",
+        "Okey dokey",
+        "Alrighty",
+        "OK",
+        "All-righty then!",
+    ]
+    return random.choice(responses)
+
+
 def media_type_from_text(text: Optional[str]) -> tuple[Optional[str], Optional[str]]:
     """
     Extract media type from spoken text and preserve user's terminology.
@@ -737,10 +750,12 @@ class UnifiedVoiceHandler:
                 other_type_name = 'TV show' if other_type == 'tv' else 'movie'
                 plural = 's' if count > 1 else ''
 
+                ok_variant = get_varied_ok()
+
                 if count > 1:
-                    speech = f"OK, I have {count} {other_type_name}{plural} for you. "
+                    speech = f"{ok_variant}, I have {count} {other_type_name}{plural} for you. "
                 else:
-                    speech = f"OK, I have a {other_type_name} for you. "
+                    speech = f"{ok_variant}, I have a {other_type_name} for you. "
 
                 # Present first result
                 first = filtered_results[0]
@@ -760,12 +775,12 @@ class UnifiedVoiceHandler:
 
         # Check if user is declining to hear results from other years
         if state.get('pending_year_filter_question'):
-            speech = "Okay. Try searching again with a different year or without the year."
+            speech = f"{get_varied_ok()}. Try searching again with a different year or without the year."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Check if user is declining the "did you mean" suggestion
         if state.get('pending_did_you_mean_question'):
-            speech = "Okay. Try searching again with a different title."
+            speech = f"{get_varied_ok()}. Try searching again with a different title."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Check if current item is already in library (inverted logic)

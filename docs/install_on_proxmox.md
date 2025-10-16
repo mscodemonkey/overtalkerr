@@ -58,6 +58,64 @@ The script creates a lightweight LXC container with sensible defaults:
 
 ---
 
+## Accessing Your Container
+
+Before we configure anything, let's talk about how to access your new container!
+
+### From the Proxmox Host
+
+The container is created **without a root password** (passwordless). To access it, use the `pct enter` command from your Proxmox host:
+
+```bash
+pct enter <CONTAINER_ID>
+```
+
+For example, if your container ID is 112:
+
+```bash
+pct enter 112
+```
+
+This gives you a root shell inside the container - no password needed! 🎉
+
+### Want SSH Access?
+
+If you prefer to SSH into the container, you'll need to set a password first:
+
+```bash
+# Enter the container
+pct enter 112
+
+# Set a root password
+passwd
+
+# (Optional) Install and enable SSH if not already installed
+apt install openssh-server
+systemctl enable ssh
+systemctl start ssh
+```
+
+Now you can SSH using: `ssh root@YOUR-CONTAINER-IP`
+
+### Quick Management Commands
+
+You can also run commands directly from the Proxmox host without entering the container:
+
+```bash
+# Restart Overtalkerr service
+pct exec 112 -- systemctl restart overtalkerr
+
+# Check service status
+pct exec 112 -- systemctl status overtalkerr
+
+# View live logs
+pct exec 112 -- journalctl -u overtalkerr -f
+```
+
+Pretty handy! 👍
+
+---
+
 ## Post-Installation: Configure Your Backend
 
 Okay, the app is installed, but it doesn't know where your Overseerr/Jellyseerr/Ombi server is yet. Let's fix that!

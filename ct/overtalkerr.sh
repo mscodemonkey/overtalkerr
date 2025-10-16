@@ -57,60 +57,24 @@ function update_script() {
 
 # App Default Values
 APP="Overtalkerr"
-var_tags="media;voice-assistant"
-var_cpu="2"
-var_ram="1024"
-var_disk="4"
-var_os="debian"
-var_version="12"
-var_unprivileged="1"
+var_tags="${var_tags:-media;voice-assistant}"
+var_cpu="${var_cpu:-2}"
+var_ram="${var_ram:-1024}"
+var_disk="${var_disk:-4}"
+var_os="${var_os:-debian}"
+var_version="${var_version:-12}"
+var_unprivileged="${var_unprivileged:-1}"
 
 # App Output & Base Settings
 header_info "$APP"
-base_settings
 variables
 color
-
-# App Output
-description
-
-echo -e "${DGN}Using ${var_os} Version: ${BGN}${var_version}${CL}"
-echo -e "${DGN}Using Container Type: ${BGN}Unprivileged${CL}"
-echo -e "${DGN}Using Root Password: ${BGN}Automatic Login${CL}"
-echo -e "${DGN}Using Container ID: ${BGN}$NEXTID${CL}"
-echo -e "${DGN}Using Hostname: ${BGN}$NSAPP${CL}"
-echo -e "${DGN}Using Disk Size: ${BGN}$var_disk${CL}"
-echo -e "${DGN}Allocated Cores: ${BGN}$var_cpu${CL}"
-echo -e "${DGN}Allocated RAM: ${BGN}$var_ram${CL}"
-echo -e "${DGN}Using Bridge: ${BGN}$BRG${CL}"
-echo -e "${DGN}Using Static IP Address: ${BGN}$NET${CL}"
-echo -e "${DGN}Using Gateway IP Address: ${BGN}$GATE${CL}"
-echo -e "${DGN}Using APT-Cacher IP Address: ${BGN}$APT_CACHER_IP${CL}"
-echo -e "${DGN}Disable IPv6: ${BGN}$DISABLEIP6${CL}"
-echo -e "${DGN}Using Interface MTU Size: ${BGN}$MTU${CL}"
-echo -e "${DGN}Using DNS Search Domain: ${BGN}$SD${CL}"
-echo -e "${DGN}Using DNS Server Address: ${BGN}$NS${CL}"
-echo -e "${DGN}Using MAC Address: ${BGN}$MAC${CL}"
-echo -e "${DGN}Using VLAN Tag: ${BGN}$VLAN${CL}"
-echo -e "${DGN}Enable Root SSH Access: ${BGN}$SSH${CL}"
-if [[ "$SSH" == "yes" ]]; then echo -e "${DGN}Using SSH Authorized Keys: ${BGN}$AUTHORIZED_KEYS${CL}"; fi
-echo -e "${DGN}Enable Verbose Mode: ${BGN}$VERB${CL}"
-echo -e "${BL}Creating a ${APP} LXC using the above default settings${CL}"
-
-# Downloads the LXC template
-msg_info "Downloading LXC template (Debian 12)"
-mapfile -t TEMPLATES < <(pveam available -section system | sed -n "s/.*\($var_os-$var_version.*\)/\1/p" | sort -t - -k 2 -V)
-TEMPLATE="${TEMPLATES[-1]}"
-pveam download local $TEMPLATE >/dev/null ||
-  die "A problem occured while downloading the LXC template."
-msg_ok "Downloaded LXC template (${TEMPLATE})"
+catch_errors
 
 # Create & Start LXC
-build_container
-
-# Container Setup
 start
-update_os
+build_container
+description
 
 msg_info "Installing Dependencies"
 $STD apt-get install -y \
@@ -224,7 +188,8 @@ echo -e "   3. Update MEDIA_BACKEND_API_KEY with your API key"
 echo -e "   4. Update PUBLIC_BASE_URL with your public HTTPS URL"
 echo -e "   5. Restart: ${YW}systemctl restart overtalkerr${CL}\n"
 echo -e "${APP} should be reachable at ${BL}http://${IP}:5000${CL}"
-echo -e "  - Web UI Test Interface: ${BL}http://${IP}:5000/test${CL}"
-echo -e "  - Health Check: ${BL}http://${IP}:5000/test/info${CL}\n"
+echo -e "  - Dashboard: ${BL}http://${IP}:5000${CL}"
+echo -e "  - Configuration UI: ${BL}http://${IP}:5000/config${CL}"
+echo -e "  - Test Interface: ${BL}http://${IP}:5000/test${CL}\n"
 echo -e "📚 Documentation: ${BL}https://github.com/mscodemonkey/overtalkerr${CL}"
-echo -e "🔧 Configuration Guide: ${BL}https://github.com/mscodemonkey/overtalkerr/blob/main/BACKENDS.md${CL}\n"
+echo -e "🔧 Configuration Guide: ${BL}https://github.com/mscodemonkey/overtalkerr/blob/main/documentation/connect_to_request_apps.md${CL}\n"

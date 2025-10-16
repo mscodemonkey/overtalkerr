@@ -30,7 +30,7 @@ from db import db_session, SessionState, cleanup_old_sessions
 import overseerr
 from overseerr import OverseerrError, OverseerrConnectionError
 from voice_assistant_adapter import router, VoiceResponse, VoiceAssistantPlatform
-from unified_voice_handler import unified_handler
+from unified_voice_handler import unified_handler, load_state, save_state
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -341,7 +341,7 @@ def test_start():
     voice_response = unified_handler.handle_download(voice_request)
 
     # Load state to get result count
-    state = unified_handler.load_state(user_id, conv_id)
+    state = load_state(user_id, conv_id)
 
     result = {
         "userId": user_id,
@@ -388,7 +388,7 @@ def test_yes():
 
     # Check if request was created
     if "requested" in voice_response.speech.lower() or "okay" in voice_response.speech.lower():
-        state = unified_handler.load_state(user_id, conv_id)
+        state = load_state(user_id, conv_id)
         if state and state.get('results'):
             chosen = state['results'][state.get('index', 0)]
             result["requested"] = {
@@ -422,7 +422,7 @@ def test_no():
     voice_response = unified_handler.handle_no(voice_request)
 
     # Load updated state
-    state = unified_handler.load_state(user_id, conv_id)
+    state = load_state(user_id, conv_id)
 
     result = {
         "speech": voice_response.speech,
@@ -447,7 +447,7 @@ def test_state():
     if not conv_id:
         return jsonify({"error": "conversationId is required"}), 400
 
-    state = unified_handler.load_state(user_id, conv_id)
+    state = load_state(user_id, conv_id)
     return jsonify({"state": state})
 
 

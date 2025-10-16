@@ -624,9 +624,9 @@ async function sayYes() {
                          data.speech.includes('Would you like') ||
                          data.speech.includes('you looking for') ||
                          data.speech.includes('Did you mean');
-      const isFinalMessage = data.speech.includes('requested') ||
-                             data.speech.includes('already been') ||
-                             data.speech.includes('done') ||
+      const isFinalMessage = data.speech.includes('requested') && !data.speech.includes('thinking of a different') ||
+                             data.speech.includes('already been requested') ||
+                             data.speech.includes('done') && !data.speech.includes('thinking of a different') ||
                              data.speech.includes('available soon') ||
                              data.speech.includes('ready to watch');
       const showButtons = data.conversationId && isQuestion && !isFinalMessage;
@@ -680,9 +680,9 @@ async function sayNo() {
                          data.speech.includes('Did you mean');
       const isFinalMessage = data.speech.includes('That\'s all') ||
                              data.speech.includes('Perfect!') ||
-                             data.speech.includes('requested') ||
-                             data.speech.includes('already been') ||
-                             data.speech.includes('done') ||
+                             data.speech.includes('requested') && !data.speech.includes('thinking of a different') ||
+                             data.speech.includes('already been requested') ||
+                             data.speech.includes('done') && !data.speech.includes('thinking of a different') ||
                              data.speech.includes('available soon') ||
                              data.speech.includes('ready to watch');
       const showButtons = data.conversationId && isQuestion && !isFinalMessage;

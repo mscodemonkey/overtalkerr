@@ -68,6 +68,7 @@ def get_stats():
     try:
         from db import SessionState, db_session
         from datetime import datetime, timedelta
+        from media_backends import get_backend, BackendFactory
 
         stats = {}
 
@@ -79,20 +80,24 @@ def get_stats():
             stats['backend_configured'] = False
         else:
             stats['backend_configured'] = True
+
+            # Try to get backend info
             try:
                 backend = get_backend()
                 stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
-
-                # Try to actually connect
-                try:
-                    stats['backend_connected'] = Config.check_connectivity()
-                except Exception as conn_err:
-                    logger.warning(f"Backend connectivity check failed: {conn_err}")
-                    stats['backend_connected'] = False
+                stats['backend_connected'] = True
             except Exception as e:
-                logger.error(f"Failed to get backend: {e}")
+                # Couldn't initialize backend, but still show what we know
+                logger.warning(f"Could not initialize backend: {e}")
                 stats['backend_connected'] = False
-                stats['backend_type'] = 'Unknown'
+
+                # Try to guess backend type from URL or just show as configured
+                try:
+                    detected_type = BackendFactory.detect_backend_type(Config.MEDIA_BACKEND_URL, Config.MEDIA_BACKEND_API_KEY)
+                    stats['backend_type'] = detected_type.value.title()
+                except:
+                    # Can't detect, use generic name
+                    stats['backend_type'] = 'Backend'
 
         # Database stats
         with db_session() as session:

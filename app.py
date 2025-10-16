@@ -41,8 +41,8 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
 
 logger.info("Overtalkerr starting up...")
 
-# Check Overseerr connectivity on startup
-if not Config.MOCK_OVERSEERR:
+# Check backend connectivity on startup
+if not Config.MOCK_BACKEND:
     Config.check_connectivity()
 
 # ========================================
@@ -281,7 +281,7 @@ def test_ui():
 def test_info():
     """Get environment info for test UI"""
     return jsonify({
-        "mock": Config.MOCK_OVERSEERR,
+        "mock": Config.MOCK_BACKEND,
         "authProtected": _needs_auth(),
         "platform": "multi-platform",
         "version": "2.0.0"
@@ -480,9 +480,9 @@ def health_check():
         with db_session() as s:
             count = s.query(SessionState).count()
 
-        # Check Overseerr (if not in mock mode)
-        overseerr_status = "mock" if Config.MOCK_OVERSEERR else "connected"
-        if not Config.MOCK_OVERSEERR:
+        # Check backend (if not in mock mode)
+        overseerr_status = "mock" if Config.MOCK_BACKEND else "connected"
+        if not Config.MOCK_BACKEND:
             try:
                 # Quick connectivity check
                 overseerr_status = "connected" if Config.check_connectivity() else "unreachable"

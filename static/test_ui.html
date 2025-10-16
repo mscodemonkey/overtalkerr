@@ -161,6 +161,73 @@
       gap: 8px;
       flex-wrap: wrap;
     }
+    .conversation-flow {
+      margin-top: 24px;
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .message {
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .message.user {
+      flex-direction: row-reverse;
+    }
+    .message-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      background: #e5e7eb;
+    }
+    .message.user .message-avatar {
+      background: #3b82f6;
+    }
+    .message-content {
+      flex: 1;
+      background: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      max-width: 70%;
+    }
+    .message.user .message-content {
+      background: #3b82f6;
+      color: white;
+    }
+    .message-content .message-text {
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .message-content .message-time {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 6px;
+      display: block;
+    }
+    .message.user .message-content .message-time {
+      color: rgba(255,255,255,0.7);
+    }
+    .empty-conversation {
+      text-align: center;
+      color: #9ca3af;
+      padding: 40px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -228,7 +295,17 @@
     </div>
 
     <h3>
-      💬 Speech Response
+      💬 Conversation Flow
+      <button class="secondary" style="float: right; margin-top: -4px; padding: 6px 12px; font-size: 12px;" onclick="clearConversation()">Clear</button>
+    </h3>
+    <div id="conversationFlow" class="conversation-flow">
+      <div class="empty-conversation">
+        Start a search to begin the conversation...
+      </div>
+    </div>
+
+    <h3>
+      📝 Latest Speech Response
       <span id="speechStatus"></span>
     </h3>
     <pre id="speech">(No response yet)</pre>
@@ -243,6 +320,47 @@ let conversationId = null;
 let currentIndex = 0;
 let totalResults = 0;
 let loading = false;
+let conversationHistory = [];
+
+function addMessageToConversation(text, isUser = false) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  conversationHistory.push({
+    text: text,
+    isUser: isUser,
+    time: timeStr
+  });
+
+  renderConversation();
+}
+
+function renderConversation() {
+  const container = document.getElementById('conversationFlow');
+
+  if (conversationHistory.length === 0) {
+    container.innerHTML = '<div class="empty-conversation">Start a search to begin the conversation...</div>';
+    return;
+  }
+
+  container.innerHTML = conversationHistory.map(msg => `
+    <div class="message ${msg.isUser ? 'user' : 'assistant'}">
+      <div class="message-avatar">${msg.isUser ? '👤' : '🤖'}</div>
+      <div class="message-content">
+        <p class="message-text">${msg.text}</p>
+        <span class="message-time">${msg.time}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Scroll to bottom
+  container.scrollTop = container.scrollHeight;
+}
+
+function clearConversation() {
+  conversationHistory = [];
+  renderConversation();
+}
 
 function setSpeech(text, status = '') {
   document.getElementById('speech').textContent = text || '(No response yet)';
@@ -310,6 +428,12 @@ async function startSearch() {
     return;
   }
 
+  // Build user message
+  let userMsg = `Download ${title}`;
+  if (year) userMsg += ` from ${year}`;
+  if (mt) userMsg += ` (${mt})`;
+  addMessageToConversation(userMsg, true);
+
   setLoading(true);
   setSpeech('Searching...', 'loading');
 
@@ -323,6 +447,7 @@ async function startSearch() {
 
     if (!res.ok) {
       setSpeech('Error: ' + (data.error || res.statusText));
+      addMessageToConversation('Error: ' + (data.error || res.statusText), false);
       setDebug(data);
       const banner = document.getElementById('banner');
       banner.className = 'pill error';
@@ -331,11 +456,13 @@ async function startSearch() {
     } else {
       setConv(data.conversationId);
       setSpeech(data.speech);
+      addMessageToConversation(data.speech, false);
       setDebug(data);
       updateResultCounter(data.index, data.total);
     }
   } catch (e) {
     setSpeech('Network error: ' + e.message);
+    addMessageToConversation('Network error: ' + e.message, false);
     setDebug({ error: e.message });
   } finally {
     setLoading(false);
@@ -344,6 +471,8 @@ async function startSearch() {
 
 async function sayYes() {
   if (!conversationId) { setSpeech('Start a search first.'); return; }
+
+  addMessageToConversation('Yes', true);
 
   setLoading(true);
   setSpeech('Creating request...', 'loading');
@@ -358,9 +487,11 @@ async function sayYes() {
 
     if (!res.ok) {
       setSpeech('Error: ' + (data.error || res.statusText));
+      addMessageToConversation('Error: ' + (data.error || res.statusText), false);
       setDebug(data);
     } else {
       setSpeech(data.speech);
+      addMessageToConversation(data.speech, false);
       setDebug(data);
       // Reset conversation after successful request
       if (data.speech.includes('done') || data.requested) {
@@ -372,6 +503,7 @@ async function sayYes() {
     }
   } catch (e) {
     setSpeech('Network error: ' + e.message);
+    addMessageToConversation('Network error: ' + e.message, false);
     setDebug({ error: e.message });
   } finally {
     setLoading(false);
@@ -380,6 +512,8 @@ async function sayYes() {
 
 async function sayNo() {
   if (!conversationId) { setSpeech('Start a search first.'); return; }
+
+  addMessageToConversation('No', true);
 
   setLoading(true);
   setSpeech('Loading next result...', 'loading');
@@ -394,14 +528,17 @@ async function sayNo() {
 
     if (!res.ok) {
       setSpeech('Error: ' + (data.error || res.statusText));
+      addMessageToConversation('Error: ' + (data.error || res.statusText), false);
       setDebug(data);
     } else {
       setSpeech(data.speech);
+      addMessageToConversation(data.speech, false);
       setDebug(data);
       updateResultCounter(data.index, data.total);
     }
   } catch (e) {
     setSpeech('Network error: ' + e.message);
+    addMessageToConversation('Network error: ' + e.message, false);
     setDebug({ error: e.message });
   } finally {
     setLoading(false);

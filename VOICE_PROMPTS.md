@@ -179,19 +179,19 @@ Okay! I've requested [title]. It'll be downloaded once it's released, which we'r
 ### Request Successful - TV Show with Season (Already Released)
 **When:** Request submitted successfully for a specific TV season that's already released
 ```
-Okay! I've requested season [number] of [title]. It should be available soon.
+You got it! I've requested season [number] of [title]. It should be available soon.
 ```
 
 ### Request Successful - TV Show with Season (Not Yet Released)
 **When:** Request submitted successfully for a specific TV season that hasn't been released yet
 ```
-Okay! I've requested season [number] of [title]. It'll be downloaded once it's released, which we're expecting to be on [October 20th] (or [October 20th, 2026] if different year).
+You got it! I've requested season [number] of [title]. It'll be downloaded once it's released, which we're expecting to be on [October 20th] (or [October 20th, 2026] if different year).
 ```
 
 ### Already Requested (Backend Duplicate Detection)
 **When:** Backend reports the request already exists
 ```
-That media has already been requested!
+Good news! That media has already been requested!
 ```
 
 ---
@@ -201,31 +201,37 @@ That media has already been requested!
 ### Connection Error
 **When:** Cannot connect to Overseerr/Jellyseerr/Ombi
 ```
-Sorry, I couldn't connect to the media server. Please try again later.
+I can't reach the media server right now. Check your connection and try again.
 ```
 
 ### Connection Error (During Request)
 **When:** Connection lost while submitting request
 ```
-Sorry, I couldn't connect to the media server. Your request wasn't submitted.
+I can't reach the media server right now. Your request wasn't submitted. Check your connection and try again.
 ```
 
 ### Authentication Error
 **When:** API key is invalid or expired
 ```
-Sorry, there's an authentication problem with the media server. Please contact the administrator.
+There's an authentication problem with the media server. Contact your administrator to fix this.
 ```
 
 ### Search Error
 **When:** Search API call fails (not connection or auth)
 ```
-Sorry, I encountered an error searching for that title. Please try again.
+Something went wrong with that search. Try a different title or try again in a moment.
 ```
 
 ### Request Creation Error
 **When:** Request submission fails (not connection error)
 ```
-Sorry, I couldn't create the request. Please try again later.
+I couldn't create that request. The server might be busy. Try again in a moment.
+```
+
+### Fallback Error
+**When:** User says something unrecognized
+```
+I didn't catch that. You can say things like, download the movie Jurassic World from 2015. What would you like to download?
 ```
 
 ---

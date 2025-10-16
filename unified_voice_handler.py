@@ -289,14 +289,14 @@ class UnifiedVoiceHandler:
         try:
             results = overseerr.search(enhanced_title, media_type)
         except OverseerrConnectionError:
-            speech = "Sorry, I couldn't connect to the media server. Please try again later."
+            speech = "I can't reach the media server right now. Check your connection and try again."
             return VoiceResponse(speech=speech, should_end_session=True)
         except OverseerrAuthError:
-            speech = "Sorry, there's an authentication problem with the media server. Please contact the administrator."
+            speech = "There's an authentication problem with the media server. Contact your administrator to fix this."
             return VoiceResponse(speech=speech, should_end_session=True)
         except OverseerrError as e:
             log_error("Overseerr search failed", e, user_id=request.user_id, title=enhanced_title)
-            speech = "Sorry, I encountered an error searching for that title. Please try again."
+            speech = "Something went wrong with that search. Try a different title or try again in a moment."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # 🚀 ENHANCED SEARCH: Apply fuzzy matching for better results
@@ -441,7 +441,7 @@ class UnifiedVoiceHandler:
                     card_text=speech
                 )
             else:
-                speech = "Sorry, I don't have any results to show."
+                speech = "I don't have any results to show. Try a new search."
                 return VoiceResponse(speech=speech, should_end_session=True)
 
         # Check if user is confirming the "did you mean" suggestion
@@ -462,7 +462,7 @@ class UnifiedVoiceHandler:
                     card_text=speech
                 )
             else:
-                speech = "Sorry, I don't have that result anymore."
+                speech = "I don't have that result anymore. Start a new search."
                 return VoiceResponse(speech=speech, should_end_session=True)
 
         idx = state.get('index', 0)
@@ -479,7 +479,7 @@ class UnifiedVoiceHandler:
         title = chosen.get('_title', 'the media')
 
         if not media_id:
-            speech = "Sorry, I couldn't determine the media ID. Please try a different title."
+            speech = "I couldn't identify that media. Try searching for a different title."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Check if media is already available
@@ -512,22 +512,22 @@ class UnifiedVoiceHandler:
 
             # Check if it was already requested (backend duplicate detection)
             if result.get('message') and 'already requested' in result.get('message', '').lower():
-                speech = "That media has already been requested!"
+                speech = "Good news! That media has already been requested!"
             else:
                 # Build availability message based on release date
                 availability_msg = build_availability_message(chosen, season_number)
 
                 if season_number:
-                    speech = f"Okay! I've requested season {season_number} of {title}. {availability_msg}"
+                    speech = f"You got it! I've requested season {season_number} of {title}. {availability_msg}"
                 else:
-                    speech = f"Okay! I've requested {title}. {availability_msg}"
+                    speech = f"You got it! I've requested {title}. {availability_msg}"
 
         except OverseerrConnectionError:
-            speech = "Sorry, I couldn't connect to the media server. Your request wasn't submitted."
+            speech = "I can't reach the media server right now. Your request wasn't submitted. Check your connection and try again."
             return VoiceResponse(speech=speech, should_end_session=True)
         except OverseerrError as e:
             log_error("Failed to create Overseerr request", e, user_id=request.user_id, media_id=media_id)
-            speech = "Sorry, I couldn't create the request. Please try again later."
+            speech = "I couldn't create that request. The server might be busy. Try again in a moment."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         return VoiceResponse(
@@ -618,7 +618,7 @@ class UnifiedVoiceHandler:
         log_request("Fallback", request.user_id, platform=request.platform.value)
 
         speech = (
-            "Sorry, I didn't understand that. You can say things like, "
+            "I didn't catch that. You can say things like, "
             "download the movie Jurassic World from 2015. What would you like to download?"
         )
 

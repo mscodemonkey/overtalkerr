@@ -208,34 +208,39 @@ class ConfigManager:
         """
         import subprocess
         import sys
+        import threading
+
+        def delayed_restart():
+            """Restart after a short delay to allow response to be sent"""
+            import time
+            time.sleep(1)  # Wait 1 second for response to be sent
+
+            try:
+                # Check if running under systemd
+                is_systemd = os.path.exists('/etc/systemd/system/overtalkerr.service')
+
+                if is_systemd:
+                    # Running as systemd service - use systemctl
+                    subprocess.run(
+                        ['systemctl', 'restart', 'overtalkerr'],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                else:
+                    # Running directly (development/docker) - restart via signal
+                    import signal
+                    os.kill(os.getpid(), signal.SIGTERM)
+            except Exception as e:
+                # Log error but don't fail - we're in a background thread
+                print(f"Error during restart: {e}", file=sys.stderr)
 
         try:
-            # Check if running under systemd
-            is_systemd = os.path.exists('/etc/systemd/system/overtalkerr.service')
+            # Start restart in background thread
+            restart_thread = threading.Thread(target=delayed_restart, daemon=True)
+            restart_thread.start()
 
-            if is_systemd:
-                # Running as systemd service - use systemctl
-                result = subprocess.run(
-                    ['systemctl', 'restart', 'overtalkerr'],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
-                )
-                if result.returncode == 0:
-                    return True, "Service restart initiated"
-                else:
-                    return False, f"Failed to restart service: {result.stderr}"
+            return True, "Service restart initiated. The service will restart in 1 second."
 
-            else:
-                # Running directly (development/docker) - restart via sys.exit
-                # Gunicorn/systemd will automatically restart the process
-                import signal
-                os.kill(os.getpid(), signal.SIGTERM)
-                return True, "Restart initiated (process will be restarted by process manager)"
-
-        except subprocess.TimeoutExpired:
-            return False, "Restart command timed out"
-        except PermissionError:
-            return False, "Permission denied. Service may need sudo privileges."
         except Exception as e:
-            return False, f"Error restarting service: {str(e)}"
+            return False, f"Error initiating restart: {str(e)}"

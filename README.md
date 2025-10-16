@@ -184,6 +184,93 @@ python app.py
 
 **Test UI**: Open `http://localhost:5000/test` to try searching for a movie without a voice device!
 
+---
+
+## 🔄 Updating Overtalkerr
+
+Overtalkerr includes built-in update detection and easy update scripts for all installation methods.
+
+### Automatic Update Detection
+
+The dashboard automatically checks for new releases from GitHub and displays a notification when an update is available. Checks happen:
+- On dashboard load
+- Every 6 hours while dashboard is open
+
+![Update notification example](https://via.placeholder.com/600x100/10b981/ffffff?text=🎉+Update+Available!+Version+1.1.0)
+
+### Manual Update
+
+Choose the update method based on how you installed Overtalkerr:
+
+#### Option A: Docker Installation
+
+```bash
+cd /path/to/overtalkerr
+./update-docker.sh
+```
+
+This script will:
+- ✅ Back up your .env and data
+- ✅ Pull the latest Docker image
+- ✅ Restart containers with new version
+- ✅ Run database migrations
+- ✅ Rollback on failure
+
+#### Option B: Proxmox LXC
+
+```bash
+# SSH into your LXC container
+ssh root@your-lxc-ip
+
+# Run update script
+cd /opt/overtalkerr
+./update-proxmox.sh
+```
+
+This script will:
+- ✅ Back up configuration and database
+- ✅ Pull latest code from git
+- ✅ Update Python dependencies
+- ✅ Restart systemd service
+- ✅ Rollback on failure
+
+#### Option C: Manual Installation
+
+```bash
+cd /path/to/overtalkerr
+./update.sh
+```
+
+This script will:
+- ✅ Back up your configuration
+- ✅ Pull latest code
+- ✅ Update dependencies in venv
+- ✅ Restart service (if using systemd)
+- ✅ Rollback on failure
+
+### Automated Updates (Docker Only)
+
+For fully automated updates, use [Watchtower](https://containrrr.dev/watchtower/):
+
+```yaml
+# Add to your docker-compose.yml
+services:
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
+    restart: unless-stopped
+```
+
+**Note**: All update scripts create automatic backups in the `backups/` directory before making changes, so you can safely roll back if needed.
+
+---
+
 ## 🎙️ Voice Platform Setup
 
 Overtalkerr supports three major voice platforms. Choose the one(s) you want to use:

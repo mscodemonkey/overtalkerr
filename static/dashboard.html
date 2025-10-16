@@ -319,6 +319,67 @@
       margin-bottom: 20px;
     }
 
+    .update-notification {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .update-notification-content {
+      flex: 1;
+    }
+
+    .update-notification-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .update-notification-text {
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    .update-notification-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .update-btn {
+      padding: 8px 16px;
+      background: white;
+      color: #059669;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .update-btn:hover {
+      background: #f0fdf4;
+      transform: translateY(-1px);
+    }
+
+    .update-btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .update-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
     .footer {
       text-align: center;
       color: var(--text-secondary);
@@ -389,6 +450,7 @@
     </header>
 
     <div id="error" class="error" role="alert" style="display: none;"></div>
+    <div id="updateNotification" class="update-notification" role="alert" style="display: none;"></div>
     <div id="loading" class="loading" role="status" aria-live="polite">Loading dashboard...</div>
 
     <main id="main-content">
@@ -458,6 +520,39 @@
   </div>
 
   <script>
+    // Check for updates
+    async function checkForUpdates() {
+      try {
+        const response = await fetch('/api/version');
+        if (!response.ok) return;
+
+        const versionInfo = await response.json();
+
+        if (versionInfo.update_available) {
+          const notification = document.getElementById('updateNotification');
+          notification.innerHTML = `
+            <div class="update-notification-content">
+              <div class="update-notification-title">🎉 Update Available!</div>
+              <div class="update-notification-text">
+                Version ${versionInfo.latest_version} is now available (you're on ${versionInfo.current_version})
+              </div>
+            </div>
+            <div class="update-notification-actions">
+              <a href="${versionInfo.release_url}" target="_blank" rel="noopener" class="update-btn">
+                View Release
+              </a>
+              <button class="update-btn update-btn-secondary" onclick="this.parentElement.parentElement.style.display='none'">
+                Dismiss
+              </button>
+            </div>
+          `;
+          notification.style.display = 'flex';
+        }
+      } catch (error) {
+        console.warn('Could not check for updates:', error);
+      }
+    }
+
     // Load dashboard data
     async function loadDashboard() {
       try {
@@ -538,6 +633,10 @@
 
     // Initial load
     loadDashboard();
+
+    // Check for updates on load and every 6 hours
+    checkForUpdates();
+    setInterval(checkForUpdates, 6 * 60 * 60 * 1000);
   </script>
   <!-- Theme Management -->
   <script src="/static/theme.js"></script>

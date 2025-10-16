@@ -152,6 +152,68 @@ def get_stats():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/version')
+def get_version():
+    """Get current version and check for updates from GitHub"""
+    import os
+    import requests
+    from datetime import datetime, timedelta
+
+    try:
+        # Read current version
+        version_file = os.path.join(os.path.dirname(__file__), 'VERSION')
+        with open(version_file, 'r') as f:
+            current_version = f.read().strip()
+
+        response_data = {
+            'current_version': current_version,
+            'update_available': False,
+            'latest_version': None,
+            'release_url': None,
+            'release_notes': None,
+            'checked_at': datetime.utcnow().isoformat()
+        }
+
+        # Check GitHub for latest release
+        try:
+            github_api = 'https://api.github.com/repos/mscodemonkey/overtalkerr/releases/latest'
+            headers = {'Accept': 'application/vnd.github.v3+json'}
+
+            gh_response = requests.get(github_api, headers=headers, timeout=5)
+
+            if gh_response.status_code == 200:
+                release_data = gh_response.json()
+                latest_version = release_data.get('tag_name', '').lstrip('v')
+
+                response_data['latest_version'] = latest_version
+                response_data['release_url'] = release_data.get('html_url')
+                response_data['release_notes'] = release_data.get('body', '')
+                response_data['published_at'] = release_data.get('published_at')
+
+                # Simple version comparison (works for semver like 1.0.0)
+                if latest_version and latest_version != current_version:
+                    # Remove -beta, -alpha suffixes for comparison
+                    current_clean = current_version.split('-')[0]
+                    latest_clean = latest_version.split('-')[0]
+
+                    current_parts = [int(x) for x in current_clean.split('.')]
+                    latest_parts = [int(x) for x in latest_clean.split('.')]
+
+                    if latest_parts > current_parts:
+                        response_data['update_available'] = True
+                        logger.info(f"Update available: {current_version} -> {latest_version}")
+
+        except Exception as e:
+            logger.warning(f"Could not check for updates: {e}")
+            response_data['check_error'] = str(e)
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        log_error("Failed to get version info", e)
+        return jsonify({"error": str(e)}), 500
+
+
 # ========================================
 # ALEXA ENDPOINT
 # ========================================

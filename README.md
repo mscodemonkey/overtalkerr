@@ -35,6 +35,8 @@ The backend automatically detects your media request service (Overseerr, Jellyse
 
 **Automatic Backend Detection**: Overtalkerr automatically detects which backend you're using by probing the API endpoints - no manual configuration needed! Just provide your base URL and API key.
 
+> **💡 Using Radarr/Sonarr?** These tools are excellent for managing downloads, but they lack the unified search experience that makes voice requests intuitive. We recommend pairing them with one of the supported backends above - they're specifically designed to provide a better search and request interface while still managing your Radarr/Sonarr instances behind the scenes. This gives you the best of both worlds: powerful automation *and* user-friendly requests!
+
 📚 **[See Backend Configuration Guide](BACKENDS.md)** for setup details and compatibility notes.
 
 ### Capabilities

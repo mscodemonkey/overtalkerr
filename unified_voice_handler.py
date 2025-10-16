@@ -717,14 +717,14 @@ class UnifiedVoiceHandler:
                 plural = 's' if count > 1 else ''
 
                 if count > 1:
-                    speech = f"OK, we have {count} {other_type_name}{plural} for you. "
+                    speech = f"OK, I have {count} {other_type_name}{plural} for you. "
                 else:
-                    speech = f"OK, we have a {other_type_name} for you. "
+                    speech = f"OK, I have a {other_type_name} for you. "
 
                 # Present first result
                 first = filtered_results[0]
                 user_term = state.get('user_term')
-                item_speech = build_speech_for_item(first, "", user_term=user_term)  # Empty prefix since we already said "OK, we have..."
+                item_speech = build_speech_for_item(first, "", user_term=user_term)  # Empty prefix since we already said "OK, I have..."
                 speech += item_speech
 
                 return VoiceResponse(

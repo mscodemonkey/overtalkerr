@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overtalkerr - Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      color: white;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 10px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .tagline {
+      font-size: 18px;
+      opacity: 0.9;
+      font-weight: 300;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 8px;
+    }
+
+    .card-subtitle {
+      font-size: 14px;
+      color: #999;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .status.connected {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .status.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    .status.connected .status-dot {
+      background: #28a745;
+    }
+
+    .status.disconnected .status-dot {
+      background: #dc3545;
+    }
+
+    .status.warning .status-dot {
+      background: #ffc107;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .recent-list {
+      list-style: none;
+    }
+
+    .recent-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .recent-item:last-child {
+      border-bottom: none;
+    }
+
+    .recent-title {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .recent-meta {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .recent-time {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: white;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .btn-tertiary {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .loading {
+      text-align: center;
+      color: white;
+      padding: 40px;
+      font-size: 18px;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .footer {
+      text-align: center;
+      color: white;
+      opacity: 0.7;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo-container">
+        <!-- Overtalkerr Logo SVG -->
+        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer circle with gradient -->
+          <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#f093fb;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#4facfe;stop-opacity:1" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- Background circle -->
+          <circle cx="50" cy="50" r="48" fill="white" opacity="0.2"/>
+
+          <!-- Sound waves (forming a play button shape) -->
+          <path d="M 30 35 Q 25 50 30 65" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+          <path d="M 20 30 Q 12 50 20 70" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4"/>
+
+          <path d="M 70 35 Q 75 50 70 65" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+          <path d="M 80 30 Q 88 50 80 70" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4"/>
+
+          <!-- Microphone in center -->
+          <rect x="45" y="35" width="10" height="20" rx="5" fill="white" filter="url(#glow)"/>
+          <path d="M 42 55 Q 42 62 50 62 Q 58 62 58 55" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" filter="url(#glow)"/>
+          <line x1="50" y1="62" x2="50" y2="68" stroke="white" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
+          <line x1="44" y1="68" x2="56" y2="68" stroke="white" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
+
+          <!-- Subtle play triangle overlay -->
+          <path d="M 48 42 L 48 58 L 58 50 Z" fill="white" opacity="0.3"/>
+        </svg>
+        <div>
+          <h1>OVERTALKERR</h1>
+          <p class="tagline">Voice Assistant Dashboard</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="loading" class="loading">Loading dashboard...</div>
+
+    <div id="dashboard" style="display: none;">
+      <div class="dashboard-grid">
+        <!-- System Status Card -->
+        <div class="card">
+          <div class="card-title">✅ System Status</div>
+          <div id="backend-status"></div>
+          <div style="margin-top: 12px;">
+            <div style="font-size: 14px; color: #666; margin-bottom: 4px;">Backend Type</div>
+            <div id="backend-type" style="font-weight: 600; color: #667eea;"></div>
+          </div>
+          <div style="margin-top: 12px;">
+            <div style="font-size: 14px; color: #666; margin-bottom: 4px;">Configuration</div>
+            <div id="config-status"></div>
+          </div>
+        </div>
+
+        <!-- Total Requests Card -->
+        <div class="card">
+          <div class="card-title">📊 Total Requests</div>
+          <div class="card-value" id="total-requests">0</div>
+          <div class="card-subtitle">All time</div>
+        </div>
+
+        <!-- This Week Card -->
+        <div class="card">
+          <div class="card-title">📈 This Week</div>
+          <div class="card-value" id="week-requests">0</div>
+          <div class="card-subtitle" id="today-subtitle">Today: 0</div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Card (full width) -->
+      <div class="card">
+        <div class="card-title">🕐 Recent Activity</div>
+        <ul id="recent-activity" class="recent-list">
+          <li class="empty-state">
+            <div class="empty-state-icon">🎬</div>
+            <div>No recent activity yet. Start making voice requests!</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions">
+        <a href="/config" class="btn btn-primary">
+          <span>⚙️</span>
+          <span>Configuration</span>
+        </a>
+        <a href="/test" class="btn btn-secondary">
+          <span>🧪</span>
+          <span>Test Interface</span>
+        </a>
+        <a href="https://github.com/mscodemonkey/overtalkerr" target="_blank" class="btn btn-tertiary">
+          <span>📚</span>
+          <span>Documentation</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer">
+      Overtalkerr v1.0 Beta • Voice Assistant for Media Requests
+    </div>
+  </div>
+
+  <script>
+    // Load dashboard data
+    async function loadDashboard() {
+      try {
+        const response = await fetch('/api/stats');
+        if (!response.ok) throw new Error('Failed to load stats');
+
+        const stats = await response.json();
+
+        // Show dashboard, hide loading
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        // Backend status
+        const backendStatus = document.getElementById('backend-status');
+        if (stats.backend_connected) {
+          backendStatus.innerHTML = '<div class="status connected"><span class="status-dot"></span>Connected</div>';
+        } else {
+          backendStatus.innerHTML = '<div class="status disconnected"><span class="status-dot"></span>Disconnected</div>';
+        }
+
+        document.getElementById('backend-type').textContent = stats.backend_type;
+
+        // Configuration status
+        const configStatus = document.getElementById('config-status');
+        if (stats.config_complete) {
+          configStatus.innerHTML = '<div class="status connected"><span class="status-dot"></span>Complete</div>';
+        } else {
+          configStatus.innerHTML = '<div class="status warning"><span class="status-dot"></span>Incomplete</div>';
+        }
+
+        // Stats
+        document.getElementById('total-requests').textContent = stats.total_requests || 0;
+        document.getElementById('week-requests').textContent = stats.requests_this_week || 0;
+        document.getElementById('today-subtitle').textContent = `Today: ${stats.requests_today || 0}`;
+
+        // Recent activity
+        const recentList = document.getElementById('recent-activity');
+        if (stats.recent_activity && stats.recent_activity.length > 0) {
+          recentList.innerHTML = stats.recent_activity.map(item => {
+            const timeAgo = item.timestamp ? getTimeAgo(new Date(item.timestamp)) : 'Unknown';
+            const icon = item.media_type === 'movie' ? '🎬' : '📺';
+            return `
+              <li class="recent-item">
+                <div>
+                  <div class="recent-title">${icon} ${item.title}</div>
+                  <div class="recent-meta">${item.year || 'Year unknown'}</div>
+                </div>
+                <div class="recent-time">${timeAgo}</div>
+              </li>
+            `;
+          }).join('');
+        }
+
+      } catch (error) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').textContent = 'Error loading dashboard: ' + error.message;
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+
+    // Helper function to get time ago
+    function getTimeAgo(date) {
+      const seconds = Math.floor((new Date() - date) / 1000);
+
+      if (seconds < 60) return 'Just now';
+      if (seconds < 3600) return Math.floor(seconds / 60) + ' min ago';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+      if (seconds < 604800) return Math.floor(seconds / 86400) + ' days ago';
+      return Math.floor(seconds / 604800) + ' weeks ago';
+    }
+
+    // Auto-refresh every 30 seconds
+    setInterval(loadDashboard, 30000);
+
+    // Initial load
+    loadDashboard();
+  </script>
+</body>
+</html>

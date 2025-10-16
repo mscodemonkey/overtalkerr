@@ -154,18 +154,29 @@ def search(query: str, media_type: Optional[str] = None) -> List[Dict[str, Any]]
         raise OverseerrError(f"Unexpected error: {str(e)}")
 
 
-def pick_best(results: List[Dict[str, Any]], *, upcoming_only: bool, year_filter: Optional[str]) -> List[Dict[str, Any]]:
+def pick_best(results: List[Dict[str, Any]], *, upcoming_only: bool, year_filter: Optional[tuple[int, int]]) -> List[Dict[str, Any]]:
     """Return results sorted according to rules.
     - Prioritizes intelligent match tier (_combined_score from fuzzy matching)
     - upcoming_only => release date in the future ranked first
-    - year_filter => keep where releaseDate startswith(year)
+    - year_filter => keep where year is in range (start_year, end_year) inclusive
     - otherwise, sort by match quality then by most recent release date desc
     """
     today = dt.date.today()
 
-    # Apply year filter strictly
+    # Apply year filter strictly (now supports year ranges)
     if year_filter:
-        results = [r for r in results if (r.get("_releaseDate") or "").startswith(year_filter)]
+        start_year, end_year = year_filter
+        filtered = []
+        for r in results:
+            release_date = r.get("_releaseDate", "")
+            if release_date:
+                try:
+                    year = int(release_date[:4])
+                    if start_year <= year <= end_year:
+                        filtered.append(r)
+                except (ValueError, IndexError):
+                    pass
+        results = filtered
 
     def score(r: Dict[str, Any]) -> Tuple[int, int, int]:
         # Upcoming score: 1 if in future and upcoming_only requested

@@ -45,6 +45,96 @@ def get_varied_ok() -> str:
     return random.choice(responses)
 
 
+def parse_year_filter(text: Optional[str]) -> Optional[tuple[int, int]]:
+    """
+    Parse natural language year expressions into a year range tuple (start_year, end_year).
+
+    Supports:
+    - Exact years: "2020" -> (2020, 2020)
+    - "this year" -> (current_year - 1, current_year)
+    - "last year" -> (current_year - 2, current_year - 1)
+    - "a couple of years ago" -> (current_year - 5, current_year - 1)
+    - "a few years ago" -> (current_year - 10, current_year - 1)
+    - "in the 70s", "in the 70's" -> (1970, 1979)
+    - "in the 1970s", "in the 1970's" -> (1970, 1979)
+    - "in the noughties", "in the naughties" -> (2000, 2009)
+    - Decades with century: "in the 1990s" -> (1990, 1999)
+
+    Returns:
+        Tuple of (start_year, end_year) inclusive, or None if no year filter found
+    """
+    if not text:
+        return None
+
+    text_lower = text.lower()
+    current_year = datetime.datetime.now().year
+
+    # Check for "this year" (with 1 year buffer for mistakes)
+    if re.search(r'\bthis year\b', text_lower):
+        return (current_year - 1, current_year)
+
+    # Check for "last year" (with 1 year buffer)
+    if re.search(r'\blast year\b', text_lower):
+        return (current_year - 2, current_year - 1)
+
+    # Check for "a couple of years ago" (5 year range)
+    if re.search(r'\ba couple (?:of )?years ago\b', text_lower):
+        return (current_year - 5, current_year - 1)
+
+    # Check for "a few years ago" (10 year range)
+    if re.search(r'\ba few years ago\b', text_lower):
+        return (current_year - 10, current_year - 1)
+
+    # Check for "noughties" or "naughties" (2000-2009)
+    if re.search(r'\b(?:noughties|naughties)\b', text_lower):
+        return (2000, 2009)
+
+    # Check for 4-digit year (e.g., "1978", "in the 1970s")
+    match = re.search(r'\b(1[89]\d{2}|20\d{2})s?\b', text_lower)
+    if match:
+        year = int(match.group(1))
+        # Check if it ends with '0' - likely a decade reference (e.g., "1970s")
+        if year % 10 == 0:
+            return (year, year + 9)
+        else:
+            return (year, year)
+
+    # Check for 2-digit decade references (e.g., "in the 70s", "the 80's")
+    # Assume 10s-20s are 21st century (2010s, 2020s), 30s+ are 20th century
+    match = re.search(r'\b(?:the )?([0-9]{2})(?:s|\'s)\b', text_lower)
+    if match:
+        decade = int(match.group(1))
+        if decade <= 29:  # 00-29 are 2000-2029
+            start_year = 2000 + decade
+        else:  # 30+ are 1930-1999
+            start_year = 1900 + decade
+        return (start_year, start_year + 9)
+
+    return None
+
+
+def format_year_range_for_speech(year_range: tuple[int, int]) -> str:
+    """
+    Convert a year range tuple to human-readable text for speech.
+
+    Examples:
+        (2024, 2024) -> "2024"
+        (1970, 1979) -> "the 1970s"
+        (2020, 2025) -> "2020 to 2025"
+    """
+    start_year, end_year = year_range
+
+    if start_year == end_year:
+        return str(start_year)
+
+    # Check if it's a complete decade
+    if start_year % 10 == 0 and end_year == start_year + 9:
+        return f"the {start_year}s"
+
+    # Otherwise, use "X to Y"
+    return f"{start_year} to {end_year}"
+
+
 def media_type_from_text(text: Optional[str]) -> tuple[Optional[str], Optional[str]]:
     """
     Extract media type from spoken text and preserve user's terminology.
@@ -78,6 +168,7 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
         user_term: User's preferred terminology (e.g., "film", "movie", "show")
     """
     from datetime import datetime
+    import random
 
     title = item.get('_title') or item.get('title') or item.get('name') or 'Unknown title'
     mtype = item.get('_mediaType') or 'title'
@@ -106,9 +197,33 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
     # Build base speech
     if year:
         if is_unreleased:
-            speech = f"{prefix} the {type_word} {title}, releasing in {year}"
+            # Varied phrasing for unreleased content
+            date_phrases = [
+                f"releasing in {year}",
+                f"that's releasing in {year}",
+                f"coming out in {year}",
+                f"premiering in {year}",
+            ]
+            date_part = random.choice(date_phrases)
+            speech = f"{prefix} the {type_word} {title}, {date_part}"
         else:
-            speech = f"{prefix} the {type_word} {title}, released in {year}"
+            # Varied date phrasing for released content
+            date_phrases = [
+                f"from {year}",
+                f"released in {year}",
+                f"released {year}",
+                f"that came out in {year}",
+            ]
+            date_part = random.choice(date_phrases)
+
+            # Vary structure: "the movie Superman from 1978" vs "a movie from 1978, Superman"
+            if random.choice([True, False]):
+                speech = f"{prefix} the {type_word} {title} {date_part}"
+            else:
+                if "from" in date_part or "in" in date_part:
+                    speech = f"{prefix} a {type_word} {date_part}, {title}"
+                else:
+                    speech = f"{prefix} the {year} {type_word} {title}"
     else:
         speech = f"{prefix} the {type_word} {title}"
 
@@ -159,7 +274,27 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None,
 
     # Build the title part with year if available
     if year:
-        title_part = f"the {type_word} {title}, released in {year}"
+        # Varied date phrasing options
+        date_phrases = [
+            f"from {year}",
+            f"released in {year}",
+            f"released {year}",
+            f"that came out in {year}",
+        ]
+        date_part = random.choice(date_phrases)
+
+        # Also vary whether we say "the 1978 movie" or "movie from 1978"
+        if random.choice([True, False]):
+            # "the movie Superman from 1978"
+            title_part = f"the {type_word} {title} {date_part}"
+        else:
+            # "the 1978 movie Superman" or "a movie from 1978, Superman"
+            if "from" in date_part or "in" in date_part:
+                # "a movie from 1978, Superman"
+                title_part = f"a {type_word} {date_part}, {title}"
+            else:
+                # "the 1978 movie Superman"
+                title_part = f"the {year} {type_word} {title}"
     else:
         title_part = f"the {type_word} {title}"
 
@@ -361,12 +496,19 @@ class UnifiedVoiceHandler:
             elif parsed_query['temporal']['type'] == 'year' and not year:
                 year = str(parsed_query['temporal']['year'])
 
-        # Normalize year
+        # Parse year filter - supports ranges like "70s", "this year", "a few years ago"
         year_filter = None
         if year:
-            m = re.search(r"(\d{4})", str(year))
-            if m:
-                year_filter = m.group(1)
+            year_filter = parse_year_filter(year)
+            if not year_filter:
+                # Fallback to old single year extraction
+                m = re.search(r"(\d{4})", str(year))
+                if m:
+                    year_filter = (int(m.group(1)), int(m.group(1)))
+
+        # Also check the full query text for year expressions if not found in slots
+        if not year_filter and media_title:
+            year_filter = parse_year_filter(media_title)
 
         # Extract season number
         season_number = None
@@ -410,10 +552,11 @@ class UnifiedVoiceHandler:
                 if first.get('_releaseDate'):
                     year_from_result = first['_releaseDate'][:4]
 
+                year_text = format_year_range_for_speech(year_filter)
                 if year_from_result:
-                    speech = f"I couldn't find '{media_title}' from {year_filter}, but I found results from other years. Would you like to hear them?"
+                    speech = f"I couldn't find '{media_title}' from {year_text}, but I found results from other years. Would you like to hear them?"
                 else:
-                    speech = f"I couldn't find '{media_title}' from {year_filter}, but I found other results. Would you like to hear them?"
+                    speech = f"I couldn't find '{media_title}' from {year_text}, but I found other results. Would you like to hear them?"
 
                 # Save state with results (but without year filter for future navigation)
                 state = {

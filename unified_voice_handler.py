@@ -32,20 +32,38 @@ class DateTimeEncoder(json.JSONEncoder):
 # Helper Functions
 # ==========================================
 
-def media_type_from_text(text: Optional[str]) -> Optional[str]:
-    """Extract media type from spoken text"""
+def media_type_from_text(text: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """
+    Extract media type from spoken text and preserve user's terminology.
+
+    Returns:
+        tuple: (media_type, user_term) where:
+            - media_type is 'movie' or 'tv' for API calls
+            - user_term is 'film', 'movie', 'TV show', etc. for speech responses
+    """
     if not text:
-        return None
+        return None, None
     t = text.lower()
-    if 'tv' in t or 'show' in t or 'series' in t:
-        return 'tv'
-    if 'movie' in t or 'film' in t:
-        return 'movie'
-    return None
+    if 'tv' in t:
+        return 'tv', 'TV show'
+    if 'show' in t or 'series' in t:
+        return 'tv', 'show'
+    if 'film' in t:
+        return 'movie', 'film'
+    if 'movie' in t:
+        return 'movie', 'movie'
+    return None, None
 
 
-def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found") -> str:
-    """Generate speech for a search result item with availability status"""
+def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_term: Optional[str] = None) -> str:
+    """
+    Generate speech for a search result item with availability status.
+
+    Args:
+        item: The search result item
+        prefix: Opening phrase (default "I found")
+        user_term: User's preferred terminology (e.g., "film", "movie", "show")
+    """
     from datetime import datetime
 
     title = item.get('_title') or item.get('title') or item.get('name') or 'Unknown title'
@@ -64,7 +82,13 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found") -> str:
         except (ValueError, AttributeError):
             pass
 
-    type_word = 'movie' if mtype == 'movie' else 'TV show'
+    # Use user's preferred term if provided, otherwise default
+    if user_term and mtype == 'movie':
+        type_word = user_term
+    elif user_term and mtype == 'tv':
+        type_word = user_term
+    else:
+        type_word = 'movie' if mtype == 'movie' else 'TV show'
 
     # Build base speech
     if year:
@@ -95,15 +119,27 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found") -> str:
     return speech
 
 
-def build_speech_for_next(item: Dict[str, Any]) -> str:
-    """Generate speech for the next alternative result"""
+def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None) -> str:
+    """
+    Generate speech for the next alternative result.
+
+    Args:
+        item: The search result item
+        user_term: User's preferred terminology (e.g., "film", "movie", "show")
+    """
     title = item.get('_title') or 'Unknown title'
     mtype = item.get('_mediaType') or 'title'
     year = None
     if item.get('_releaseDate'):
         year = item['_releaseDate'][:4]
 
-    type_word = 'movie' if mtype == 'movie' else 'TV show'
+    # Use user's preferred term if provided, otherwise default
+    if user_term and mtype == 'movie':
+        type_word = user_term
+    elif user_term and mtype == 'tv':
+        type_word = user_term
+    else:
+        type_word = 'movie' if mtype == 'movie' else 'TV show'
 
     if year:
         return f"What about the {type_word} {title}, released in {year}?"
@@ -251,8 +287,15 @@ class UnifiedVoiceHandler:
 
         logger.info(f"Enhanced search: '{media_title}' -> '{enhanced_title}'", extra=parsed_query)
 
-        # Normalize inputs
-        media_type = media_type_from_text(media_type_text)
+        # Normalize inputs and extract user's preferred terminology
+        media_type, user_term = media_type_from_text(media_type_text)
+
+        # Also check the title itself for terminology (e.g., "download the film Superman")
+        if not user_term and media_title:
+            _, user_term_from_title = media_type_from_text(media_title)
+            if user_term_from_title:
+                user_term = user_term_from_title
+
         upcoming_only = False
 
         if upcoming_text:
@@ -332,6 +375,7 @@ class UnifiedVoiceHandler:
                     'season': season_number,
                     'results': ranked_without_year,
                     'index': 0,
+                    'user_term': user_term,
                     'pending_year_filter_question': True,  # Flag to know user needs to confirm
                 }
                 save_state(request.user_id, request.session_id, state)
@@ -371,6 +415,7 @@ class UnifiedVoiceHandler:
                         'season': season_number,
                         'results': [best_match],  # Just this one result
                         'index': 0,
+                        'user_term': user_term,
                         'pending_did_you_mean_question': True,  # Flag for confirmation
                     }
                     save_state(request.user_id, request.session_id, state)
@@ -410,12 +455,13 @@ class UnifiedVoiceHandler:
             'season': season_number,
             'results': ranked,
             'index': 0,
+            'user_term': user_term,  # Store user's preferred terminology
         }
         save_state(request.user_id, request.session_id, state)
 
         # Build response
         first = ranked[0]
-        speech = build_speech_for_item(first, "I found")
+        speech = build_speech_for_item(first, "I found", user_term=user_term)
 
         return VoiceResponse(
             speech=speech,
@@ -445,9 +491,10 @@ class UnifiedVoiceHandler:
 
             # Present the first result
             results = state.get('results', [])
+            user_term = state.get('user_term')
             if results:
                 first = results[0]
-                speech = build_speech_for_item(first, "I found")
+                speech = build_speech_for_item(first, "I found", user_term=user_term)
                 return VoiceResponse(
                     speech=speech,
                     reprompt="Is that the one you want?",
@@ -466,9 +513,10 @@ class UnifiedVoiceHandler:
 
             # Present the result
             results = state.get('results', [])
+            user_term = state.get('user_term')
             if results:
                 first = results[0]
-                speech = build_speech_for_item(first, "I found")
+                speech = build_speech_for_item(first, "I found", user_term=user_term)
                 return VoiceResponse(
                     speech=speech,
                     reprompt="Is that the one you want?",
@@ -604,7 +652,8 @@ class UnifiedVoiceHandler:
 
         # Build response
         next_item = results[idx]
-        speech = build_speech_for_next(next_item)
+        user_term = state.get('user_term')
+        speech = build_speech_for_next(next_item, user_term=user_term)
 
         return VoiceResponse(
             speech=speech,

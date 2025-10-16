@@ -46,17 +46,32 @@ def media_type_from_text(text: Optional[str]) -> Optional[str]:
 
 def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found") -> str:
     """Generate speech for a search result item with availability status"""
+    from datetime import datetime
+
     title = item.get('_title') or item.get('title') or item.get('name') or 'Unknown title'
     mtype = item.get('_mediaType') or 'title'
     year = None
-    if item.get('_releaseDate'):
-        year = item['_releaseDate'][:4]
+    release_date_str = item.get('_releaseDate')
+    is_unreleased = False
+
+    if release_date_str:
+        year = release_date_str[:4]
+        try:
+            # Check if release date is in the future
+            release_date = datetime.fromisoformat(release_date_str.replace('Z', '+00:00'))
+            now = datetime.now(release_date.tzinfo) if release_date.tzinfo else datetime.now()
+            is_unreleased = release_date > now
+        except (ValueError, AttributeError):
+            pass
 
     type_word = 'movie' if mtype == 'movie' else 'TV show'
 
     # Build base speech
     if year:
-        speech = f"{prefix} the {type_word} {title}, released in {year}"
+        if is_unreleased:
+            speech = f"{prefix} the {type_word} {title}, releasing in {year}"
+        else:
+            speech = f"{prefix} the {type_word} {title}, released in {year}"
     else:
         speech = f"{prefix} the {type_word} {title}"
 
@@ -69,9 +84,15 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found") -> str:
         speech += ". This is currently being downloaded"
     elif item.get('_isPending'):
         speech += ". This has already been requested and is pending approval"
+    elif is_unreleased:
+        # Not released yet and not in library
+        speech += ". That hasn't been released yet"
 
     # Add confirmation question
-    speech += ". Is that the one you want?"
+    if is_unreleased and not item.get('_isAvailable') and not item.get('_isPending'):
+        speech += ". Would you like to request it anyway?"
+    else:
+        speech += ". Is that the one you want?"
 
     return speech
 
@@ -279,17 +300,91 @@ class UnifiedVoiceHandler:
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # 🚀 ENHANCED SEARCH: Apply fuzzy matching for better results
+        original_results_count = len(results) if results else 0
         if results:
+            results_before_fuzzy = results.copy()  # Keep original for "did you mean" suggestions
             results = search_enhancer.fuzzy_match_results(enhanced_title, results, threshold=60)
 
         # Filter and rank results
         ranked = overseerr.pick_best(results, upcoming_only=upcoming_only, year_filter=year_filter)
 
+        # If year filter yielded no results, try again without it
+        if not ranked and year_filter:
+            logger.info(f"No results with year filter {year_filter}, retrying without year")
+            ranked_without_year = overseerr.pick_best(results, upcoming_only=upcoming_only, year_filter=None)
+
+            if ranked_without_year:
+                # Found results from other years - offer them
+                first = ranked_without_year[0]
+                year_from_result = None
+                if first.get('_releaseDate'):
+                    year_from_result = first['_releaseDate'][:4]
+
+                if year_from_result:
+                    speech = f"I couldn't find '{media_title}' from {year_filter}, but I found results from other years. Would you like to hear them?"
+                else:
+                    speech = f"I couldn't find '{media_title}' from {year_filter}, but I found other results. Would you like to hear them?"
+
+                # Save state with results (but without year filter for future navigation)
+                state = {
+                    'query': media_title,
+                    'media_type': media_type,
+                    'year': None,  # Clear year filter since we're offering non-filtered results
+                    'upcoming_only': upcoming_only,
+                    'season': season_number,
+                    'results': ranked_without_year,
+                    'index': 0,
+                    'pending_year_filter_question': True,  # Flag to know user needs to confirm
+                }
+                save_state(request.user_id, request.session_id, state)
+
+                return VoiceResponse(
+                    speech=speech,
+                    reprompt="Would you like to hear results from other years?",
+                    card_title="Overtalkerr",
+                    card_text=speech
+                )
+
         if not ranked:
-            if year_filter:
-                speech = f"I couldn't find any matches for '{media_title}' from {year_filter}. Try rephrasing or removing the year filter."
-            else:
-                speech = f"I couldn't find any matches for '{media_title}'. Try rephrasing or being more specific."
+            # Check if we had results before fuzzy filtering - suggest the closest match
+            if original_results_count > 0 and 'results_before_fuzzy' in locals():
+                from rapidfuzz import fuzz
+                # Find the best match from original results
+                best_match = None
+                best_score = 0
+                for result in results_before_fuzzy:
+                    title = result.get('_title') or result.get('title') or result.get('name', '')
+                    score = fuzz.ratio(enhanced_title.lower(), title.lower())
+                    if score > best_score:
+                        best_score = score
+                        best_match = result
+
+                # If we found a reasonable match (above 40% similarity), suggest it
+                if best_match and best_score > 40:
+                    suggested_title = best_match.get('_title') or best_match.get('title') or best_match.get('name')
+                    speech = f"I couldn't find '{media_title}'. Did you mean '{suggested_title}'?"
+
+                    # Save state with the suggestion
+                    state = {
+                        'query': suggested_title,  # Use the suggested title
+                        'media_type': media_type,
+                        'year': year_filter,
+                        'upcoming_only': upcoming_only,
+                        'season': season_number,
+                        'results': [best_match],  # Just this one result
+                        'index': 0,
+                        'pending_did_you_mean_question': True,  # Flag for confirmation
+                    }
+                    save_state(request.user_id, request.session_id, state)
+
+                    return VoiceResponse(
+                        speech=speech,
+                        reprompt=f"Did you mean '{suggested_title}'?",
+                        card_title="Overtalkerr",
+                        card_text=speech
+                    )
+
+            speech = f"I couldn't find any matches for '{media_title}'. Try rephrasing or being more specific."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Save state
@@ -327,6 +422,48 @@ class UnifiedVoiceHandler:
                 speech=speech,
                 reprompt="What would you like to download?"
             )
+
+        # Check if user is confirming they want to hear results from other years
+        if state.get('pending_year_filter_question'):
+            # User said yes to hearing results from other years
+            state['pending_year_filter_question'] = False
+            save_state(request.user_id, request.session_id, state)
+
+            # Present the first result
+            results = state.get('results', [])
+            if results:
+                first = results[0]
+                speech = build_speech_for_item(first, "I found")
+                return VoiceResponse(
+                    speech=speech,
+                    reprompt="Is that the one you want?",
+                    card_title="Overtalkerr",
+                    card_text=speech
+                )
+            else:
+                speech = "Sorry, I don't have any results to show."
+                return VoiceResponse(speech=speech, should_end_session=True)
+
+        # Check if user is confirming the "did you mean" suggestion
+        if state.get('pending_did_you_mean_question'):
+            # User said yes to the suggested title
+            state['pending_did_you_mean_question'] = False
+            save_state(request.user_id, request.session_id, state)
+
+            # Present the result
+            results = state.get('results', [])
+            if results:
+                first = results[0]
+                speech = build_speech_for_item(first, "I found")
+                return VoiceResponse(
+                    speech=speech,
+                    reprompt="Is that the one you want?",
+                    card_title="Overtalkerr",
+                    card_text=speech
+                )
+            else:
+                speech = "Sorry, I don't have that result anymore."
+                return VoiceResponse(speech=speech, should_end_session=True)
 
         idx = state.get('index', 0)
         results = state.get('results', [])
@@ -412,6 +549,16 @@ class UnifiedVoiceHandler:
                 speech=speech,
                 reprompt=speech
             )
+
+        # Check if user is declining to hear results from other years
+        if state.get('pending_year_filter_question'):
+            speech = "Okay. Try searching again with a different year or without the year."
+            return VoiceResponse(speech=speech, should_end_session=True)
+
+        # Check if user is declining the "did you mean" suggestion
+        if state.get('pending_did_you_mean_question'):
+            speech = "Okay. Try searching again with a different title."
+            return VoiceResponse(speech=speech, should_end_session=True)
 
         idx = state.get('index', 0) + 1
         results = state.get('results', [])

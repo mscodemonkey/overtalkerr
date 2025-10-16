@@ -63,7 +63,12 @@ I found the [movie/TV show] [title]. [Availability Status]. Is that the one you 
 - Partially available: `This is partially in your library`
 - Being downloaded: `This is currently being downloaded`
 - Pending approval: `This has already been requested and is pending approval`
+- Not yet released: `That hasn't been released yet`
 - Not available: *(no additional message)*
+
+**Special Handling for Unreleased Content:**
+- If unreleased and not in library: Changes "released in [year]" to "releasing in [year]"
+- Changes confirmation question from "Is that the one you want?" to "Would you like to request it anyway?"
 
 ### Next Alternative (After "No")
 **When:** User says "no" and we show the next result
@@ -89,6 +94,22 @@ I couldn't find any matches for '[title]' from [year]. Try rephrasing or removin
 ```
 I couldn't find any matches for '[title]'. Try rephrasing or being more specific.
 ```
+
+### No Results - But Found Results From Other Years
+**When:** Search with year filter finds nothing, but results exist from other years
+```
+I couldn't find '[title]' from [year], but I found results from other years. Would you like to hear them?
+```
+**User says "Yes":** Present the first result from other years
+**User says "No":** `Okay. Try searching again with a different year or without the year.`
+
+### Partial Match Suggestion (Did You Mean)
+**When:** Search returns results but none match closely enough (fuzzy matching filters them out)
+```
+I couldn't find '[title]'. Did you mean '[suggested_title]'?
+```
+**User says "Yes":** Present the suggested result
+**User says "No":** `Okay. Try searching again with a different title.`
 
 ### Out of Alternatives
 **When:** User says "no" but there are no more results
@@ -223,14 +244,18 @@ Reprompts are used when the session stays open and the user doesn't respond:
 
 ## 💡 Suggested Improvements
 
-### Potential Enhancements:
+### Implemented Features:
+✅ **Year range flexibility**: Offers results from other years when year filter yields no results
+✅ **Partial match suggestions**: "Did you mean [similar title]?" using fuzzy matching
+✅ **Release date context**: "That hasn't been released yet. Would you like to request it anyway?"
+
+### Potential Future Enhancements:
 1. **More specific connection errors**: Distinguish between timeout, DNS failure, and refused connection
-2. **Year range flexibility**: "I found results from other years. Would you like to hear them?"
-3. **Partial match suggestions**: "Did you mean [similar title]?"
-4. **Quality preferences**: Allow users to specify 4K, HD, etc.
-5. **Release date context**: "That hasn't been released yet. Would you like to request it anyway?"
-6. **Request status check**: "What's the status of my request for [title]?"
-7. **Cancel request**: "Cancel my request for [title]"
+2. **Quality preferences**: Allow users to specify 4K, HD, etc.
+3. **Request status check**: "What's the status of my request for [title]?"
+4. **Cancel request**: "Cancel my request for [title]"
+5. **Watchlist management**: "Add [title] to my watchlist"
+6. **Recent additions**: "What's new in my library?"
 
 ### Tone Adjustments:
 - Consider making error messages less apologetic for issues outside user control
@@ -281,6 +306,34 @@ User: "Download The Godfather"
 Alexa: "I found the movie The Godfather, released in 1972. This is already in your library. Is that the one you want?"
 User: "Yes"
 Alexa: "The Godfather is already in your library! You can watch it now."
+```
+
+### Year Filter with Alternate Years Available
+```
+User: "Download Superman from 1977"
+Alexa: "I couldn't find 'Superman' from 1977, but I found results from other years. Would you like to hear them?"
+User: "Yes"
+Alexa: "I found the movie Superman, released in 1978. Is that the one you want?"
+User: "Yes"
+Alexa: "Okay! I've requested Superman. It should be available soon."
+```
+
+### Partial Match Suggestion (Typo/Speech Recognition Error)
+```
+User: "Download Jurrasic Park"
+Alexa: "I couldn't find 'Jurrasic Park'. Did you mean 'Jurassic Park'?"
+User: "Yes"
+Alexa: "I found the movie Jurassic Park, released in 1993. Is that the one you want?"
+User: "Yes"
+Alexa: "Okay! I've requested Jurassic Park. It should be available soon."
+```
+
+### Unreleased Content
+```
+User: "Download Deadpool 3"
+Alexa: "I found the movie Deadpool 3, releasing in 2024. That hasn't been released yet. Would you like to request it anyway?"
+User: "Yes"
+Alexa: "Okay! I've requested Deadpool 3. It'll be downloaded once it's released, which we're expecting to be on July 26th, 2024."
 ```
 
 ---

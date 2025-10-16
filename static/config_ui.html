@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overtalkerr Configuration</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+      display: block;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    input:disabled {
+      background: #f5f5f5;
+      cursor: not-allowed;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+      background: #ccc;
+      border-radius: 13px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle.active {
+      background: #667eea;
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: left 0.3s;
+    }
+
+    .toggle.active::after {
+      left: 27px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .btn-test {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-test:hover {
+      background: #218838;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .backend-status {
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .password-toggle {
+      position: relative;
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .password-toggle-btn:hover {
+      color: #333;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚙️ Overtalkerr Configuration</h1>
+    <p class="subtitle">Configure your voice assistant settings</p>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="configForm">
+      <!-- Backend Configuration -->
+      <div class="section">
+        <div class="section-title">🎬 Media Request Backend</div>
+
+        <div class="form-group">
+          <label for="mediaBackendUrl">Backend URL</label>
+          <input type="url" id="mediaBackendUrl" name="MEDIA_BACKEND_URL" placeholder="http://your-backend:5055" required>
+          <span class="help-text">URL of your Overseerr, Jellyseerr, or Ombi instance</span>
+        </div>
+
+        <div class="form-group">
+          <label for="mediaBackendApiKey">Backend API Key</label>
+          <div class="password-toggle">
+            <input type="password" id="mediaBackendApiKey" name="MEDIA_BACKEND_API_KEY" placeholder="Your API key" required>
+            <button type="button" class="password-toggle-btn" onclick="togglePassword('mediaBackendApiKey')">Show</button>
+          </div>
+          <span class="help-text">
+            • Overseerr/Jellyseerr: Settings → General → API Key<br>
+            • Ombi: Settings → Ombi → API Key
+          </span>
+        </div>
+
+        <button type="button" class="btn-test" onclick="testBackend()">
+          🔌 Test Connection
+        </button>
+        <div id="backendStatus" class="backend-status"></div>
+      </div>
+
+      <!-- Flask Configuration -->
+      <div class="section">
+        <div class="section-title">🌐 Application Settings</div>
+
+        <div class="form-group">
+          <label for="publicBaseUrl">Public URL</label>
+          <input type="url" id="publicBaseUrl" name="PUBLIC_BASE_URL" placeholder="https://overtalkerr.yourdomain.com">
+          <span class="help-text">Public HTTPS URL for Alexa/Google/Siri to reach this service</span>
+        </div>
+
+        <div class="form-group">
+          <label for="flaskEnv">Environment</label>
+          <select id="flaskEnv" name="FLASK_ENV">
+            <option value="production">Production</option>
+            <option value="development">Development</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Mock Mode (Testing)</label>
+          <div class="toggle-container">
+            <div id="mockToggle" class="toggle" onclick="toggleMock()"></div>
+            <span id="mockLabel">Disabled</span>
+          </div>
+          <input type="hidden" id="mockBackend" name="MOCK_BACKEND" value="false">
+          <span class="help-text">Enable to test without a real backend (returns fake data)</span>
+        </div>
+      </div>
+
+      <!-- Database Configuration -->
+      <div class="section">
+        <div class="section-title">💾 Database</div>
+
+        <div class="form-group">
+          <label for="databaseUrl">Database URL</label>
+          <input type="text" id="databaseUrl" name="DATABASE_URL" placeholder="sqlite:///./data/overtalkerr.db">
+          <span class="help-text">SQLite, PostgreSQL, or MySQL connection string</span>
+        </div>
+
+        <div class="form-group">
+          <label for="sessionTtl">Session Cleanup (hours)</label>
+          <input type="text" id="sessionTtl" name="SESSION_TTL_HOURS" placeholder="24">
+          <span class="help-text">Delete conversation states older than this many hours</span>
+        </div>
+      </div>
+
+      <!-- Logging Configuration -->
+      <div class="section">
+        <div class="section-title">📝 Logging</div>
+
+        <div class="form-group">
+          <label for="logLevel">Log Level</label>
+          <select id="logLevel" name="LOG_LEVEL">
+            <option value="DEBUG">DEBUG (Very verbose)</option>
+            <option value="INFO">INFO (Recommended)</option>
+            <option value="WARNING">WARNING</option>
+            <option value="ERROR">ERROR</option>
+            <option value="CRITICAL">CRITICAL</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="logFormat">Log Format</label>
+          <select id="logFormat" name="LOG_FORMAT">
+            <option value="json">JSON (Production)</option>
+            <option value="text">Text (Development)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn-secondary" onclick="loadConfig()">🔄 Reload</button>
+        <button type="submit" class="btn-primary">💾 Save</button>
+        <button type="button" class="btn-primary" onclick="saveAndRestart()">💾 Save & Restart</button>
+      </div>
+    </form>
+
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+      <strong>Tip:</strong> Use "Save & Restart" to apply changes immediately, or just "Save" if you'll restart manually later.
+    </div>
+  </div>
+
+  <script>
+    let currentConfig = {};
+
+    // Load configuration on page load
+    window.addEventListener('DOMContentLoaded', loadConfig);
+
+    async function loadConfig() {
+      try {
+        const response = await fetch('/config');
+        if (!response.ok) throw new Error('Failed to load configuration');
+
+        const config = await response.json();
+        currentConfig = config;
+
+        // Populate form fields
+        document.getElementById('mediaBackendUrl').value = config.MEDIA_BACKEND_URL || '';
+        document.getElementById('mediaBackendApiKey').value = config.MEDIA_BACKEND_API_KEY || '';
+        document.getElementById('publicBaseUrl').value = config.PUBLIC_BASE_URL || '';
+        document.getElementById('flaskEnv').value = config.FLASK_ENV || 'production';
+        document.getElementById('databaseUrl').value = config.DATABASE_URL || 'sqlite:///./data/overtalkerr.db';
+        document.getElementById('sessionTtl').value = config.SESSION_TTL_HOURS || '24';
+        document.getElementById('logLevel').value = config.LOG_LEVEL || 'INFO';
+        document.getElementById('logFormat').value = config.LOG_FORMAT || 'json';
+
+        // Mock mode toggle
+        const mockEnabled = config.MOCK_BACKEND === 'true';
+        document.getElementById('mockBackend').value = mockEnabled ? 'true' : 'false';
+        document.getElementById('mockToggle').classList.toggle('active', mockEnabled);
+        document.getElementById('mockLabel').textContent = mockEnabled ? 'Enabled' : 'Disabled';
+
+        showAlert('Configuration loaded successfully', 'success');
+      } catch (error) {
+        showAlert('Error loading configuration: ' + error.message, 'error');
+      }
+    }
+
+    document.getElementById('configForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const config = {};
+      for (const [key, value] of formData.entries()) {
+        config[key] = value;
+      }
+
+      // Add SECRET_KEY if it doesn't exist
+      if (!config.SECRET_KEY && currentConfig.SECRET_KEY) {
+        config.SECRET_KEY = currentConfig.SECRET_KEY;
+      }
+
+      try {
+        const response = await fetch('/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to save configuration');
+        }
+
+        showAlert('✅ Configuration saved successfully!', 'success');
+        await loadConfig(); // Reload to confirm
+      } catch (error) {
+        showAlert('❌ Error saving configuration: ' + error.message, 'error');
+      }
+    });
+
+    async function saveAndRestart() {
+      if (!confirm('Save configuration and restart service now?\n\nThe page will be unavailable for a few seconds during restart.')) {
+        return;
+      }
+
+      const formData = new FormData(document.getElementById('configForm'));
+      const config = {};
+      for (const [key, value] of formData.entries()) {
+        config[key] = value;
+      }
+
+      // Add SECRET_KEY if it doesn't exist
+      if (!config.SECRET_KEY && currentConfig.SECRET_KEY) {
+        config.SECRET_KEY = currentConfig.SECRET_KEY;
+      }
+
+      try {
+        // First save the configuration
+        const saveResponse = await fetch('/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+
+        if (!saveResponse.ok) {
+          const error = await saveResponse.json();
+          throw new Error(error.error || 'Failed to save configuration');
+        }
+
+        showAlert('💾 Configuration saved! Restarting service...', 'info');
+
+        // Then trigger restart
+        const restartResponse = await fetch('/config/restart', {
+          method: 'POST'
+        });
+
+        if (!restartResponse.ok) {
+          const error = await restartResponse.json();
+          throw new Error(error.error || 'Failed to restart service');
+        }
+
+        showAlert('🔄 Service is restarting... Page will reload in 5 seconds.', 'info');
+
+        // Wait for service to restart and reload page
+        setTimeout(() => {
+          window.location.reload();
+        }, 5000);
+
+      } catch (error) {
+        showAlert('❌ Error: ' + error.message, 'error');
+      }
+    }
+
+    async function testBackend() {
+      const url = document.getElementById('mediaBackendUrl').value;
+      const apiKey = document.getElementById('mediaBackendApiKey').value;
+
+      if (!url || !apiKey) {
+        showBackendStatus('Please enter both URL and API Key', 'error');
+        return;
+      }
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '🔌 Testing... <span class="loading"></span>';
+
+      try {
+        const response = await fetch('/config/test-backend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, apiKey })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showBackendStatus(`✅ Connected! Backend: ${result.backend_type} | ${result.message}`, 'success');
+        } else {
+          showBackendStatus(`❌ ${result.error}`, 'error');
+        }
+      } catch (error) {
+        showBackendStatus(`❌ Connection failed: ${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🔌 Test Connection';
+      }
+    }
+
+    function toggleMock() {
+      const toggle = document.getElementById('mockToggle');
+      const label = document.getElementById('mockLabel');
+      const input = document.getElementById('mockBackend');
+
+      const isActive = toggle.classList.toggle('active');
+      label.textContent = isActive ? 'Enabled' : 'Disabled';
+      input.value = isActive ? 'true' : 'false';
+    }
+
+    function togglePassword(fieldId) {
+      const field = document.getElementById(fieldId);
+      const btn = event.target;
+
+      if (field.type === 'password') {
+        field.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        field.type = 'password';
+        btn.textContent = 'Show';
+      }
+    }
+
+    function showAlert(message, type) {
+      const alert = document.getElementById('alert');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      alert.style.display = 'block';
+
+      setTimeout(() => {
+        alert.style.display = 'none';
+      }, 5000);
+    }
+
+    function showBackendStatus(message, type) {
+      const status = document.getElementById('backendStatus');
+      status.className = `backend-status status-${type}`;
+      status.textContent = message;
+      status.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

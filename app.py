@@ -441,6 +441,122 @@ def cleanup_endpoint():
 
 
 # ========================================
+# CONFIGURATION MANAGEMENT ENDPOINTS
+# ========================================
+
+@app.route('/config/ui')
+def config_ui():
+    """Serve the configuration management UI"""
+    return send_from_directory('static', 'config_ui.html')
+
+
+@app.route('/config', methods=['GET'])
+def get_config():
+    """Get current configuration (without sensitive values in production)"""
+    try:
+        from config_manager import ConfigManager
+        cm = ConfigManager()
+        config = cm.read_config()
+
+        # In production, mask sensitive values for display
+        if Config.FLASK_ENV == 'production':
+            # Show only last 4 characters of API key
+            if 'MEDIA_BACKEND_API_KEY' in config and config['MEDIA_BACKEND_API_KEY']:
+                api_key = config['MEDIA_BACKEND_API_KEY']
+                if len(api_key) > 8:
+                    config['MEDIA_BACKEND_API_KEY'] = '*' * (len(api_key) - 4) + api_key[-4:]
+
+        return jsonify(config)
+
+    except Exception as e:
+        log_error("Failed to read config", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/config', methods=['POST'])
+def save_config():
+    """Save configuration to .env file"""
+    try:
+        from config_manager import ConfigManager
+        cm = ConfigManager()
+
+        new_config = request.get_json()
+        if not new_config:
+            return jsonify({"error": "No configuration data provided"}), 400
+
+        # Validate configuration
+        is_valid, error_message = cm.validate_config(new_config)
+        if not is_valid:
+            return jsonify({"error": error_message}), 400
+
+        # Write configuration
+        cm.write_config(new_config)
+
+        logger.info("Configuration updated via web UI")
+
+        return jsonify({
+            "success": True,
+            "message": "Configuration saved. Restart the service to apply changes."
+        })
+
+    except Exception as e:
+        log_error("Failed to save config", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/config/test-backend', methods=['POST'])
+def test_backend_connection():
+    """Test connection to media backend"""
+    try:
+        from config_manager import ConfigManager
+        cm = ConfigManager()
+
+        data = request.get_json()
+        if not data or 'url' not in data or 'apiKey' not in data:
+            return jsonify({"error": "URL and API key required"}), 400
+
+        result = cm.test_backend_connection(data['url'], data['apiKey'])
+        return jsonify(result)
+
+    except Exception as e:
+        log_error("Backend test failed", e)
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/config/restart', methods=['POST'])
+def restart_service():
+    """Restart the Overtalkerr service"""
+    try:
+        from config_manager import ConfigManager
+        cm = ConfigManager()
+
+        success, message = cm.restart_service()
+
+        if success:
+            logger.info("Service restart initiated via web UI")
+            return jsonify({
+                "success": True,
+                "message": message
+            })
+        else:
+            logger.error(f"Failed to restart service: {message}")
+            return jsonify({
+                "success": False,
+                "error": message
+            }), 500
+
+    except Exception as e:
+        log_error("Restart failed", e)
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# ========================================
 # APPLICATION STARTUP
 # ========================================
 

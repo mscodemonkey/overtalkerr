@@ -36,15 +36,36 @@ The script will:
 
 ## Post-Installation Configuration
 
-After installation, you **must** configure your backend settings:
+After installation, you **must** configure your backend settings. You can do this either via the **web UI** (easiest) or by **editing the config file** directly:
 
-### 1. Edit the Configuration File
+### Option 1: Web Configuration UI (Recommended)
+
+Open your browser and navigate to:
+
+```
+http://YOUR-LXC-IP:5000/config/ui
+```
+
+The web interface lets you:
+- ✅ Configure all settings with a user-friendly form
+- ✅ Test your backend connection before saving
+- ✅ Validate configuration in real-time
+- ✅ See helpful hints for each setting
+
+**Required settings:**
+1. **Backend URL**: Your Overseerr/Jellyseerr/Ombi URL
+2. **Backend API Key**: Your API key (Settings → General → API Key)
+3. **Public URL**: Your public HTTPS URL (for voice assistants)
+
+After saving, click the "Test Connection" button to verify it works, then restart the service.
+
+### Option 2: Edit Configuration File
 
 ```bash
 nano /opt/overtalkerr/.env
 ```
 
-### 2. Update Required Settings
+Update these required settings:
 
 ```bash
 # Your media request backend URL (Overseerr, Jellyseerr, or Ombi)
@@ -61,13 +82,13 @@ PUBLIC_BASE_URL=https://overtalkerr.yourdomain.com
 - **Overseerr/Jellyseerr**: Settings → General → API Key
 - **Ombi**: Settings → Ombi → API Key
 
-### 3. Restart the Service
+### Restart the Service
 
 ```bash
 systemctl restart overtalkerr
 ```
 
-### 4. Verify It's Running
+### Verify It's Running
 
 ```bash
 systemctl status overtalkerr
@@ -84,9 +105,10 @@ You should see:
 
 After installation:
 
-- **Web UI Test Interface**: `http://YOUR-LXC-IP:5000/test`
-- **Health Check**: `http://YOUR-LXC-IP:5000/test/info`
-- **API Endpoint**: `http://YOUR-LXC-IP:5000/`
+- **⚙️ Configuration UI**: `http://YOUR-LXC-IP:5000/config/ui` - **Start here!**
+- **🧪 Web UI Test Interface**: `http://YOUR-LXC-IP:5000/test`
+- **❤️ Health Check**: `http://YOUR-LXC-IP:5000/test/info`
+- **🔌 API Endpoint**: `http://YOUR-LXC-IP:5000/`
 
 ## Updating Overtalkerr
 

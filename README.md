@@ -90,25 +90,9 @@ Overtalkerr supports the three most widely-used media request managers in the se
 
 ## 🚀 Quick Start
 
-### 1. Clone and Configure
+Choose your installation method:
 
-```bash
-# Clone the repository
-git clone https://github.com/mscodemonkey/overtalkerr.git
-cd overtalkerr
-
-# Copy environment template
-cp .env.example .env
-
-# Edit .env with your settings
-# Required: MEDIA_BACKEND_URL (your backend URL) and MEDIA_BACKEND_API_KEY
-# Works with Overseerr, Jellyseerr, or Ombi - auto-detected!
-nano .env
-```
-
-### 2. Choose Your Deployment Method
-
-#### Option A: Proxmox VE (Easiest for Homelab)
+### Option A: Proxmox VE (Easiest for Homelab!)
 
 Perfect for homelab users! One-command LXC container installation:
 
@@ -116,9 +100,26 @@ Perfect for homelab users! One-command LXC container installation:
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
 ```
 
-This creates a lightweight LXC container with everything pre-configured. See **[install_on_proxmox.md](docs/install_on_proxmox.md)** for full details.
+This creates a lightweight LXC container with everything pre-configured (Python, dependencies, systemd service, and more!). After installation, just configure your backend settings via the web UI at `http://YOUR-LXC-IP:5000/config`.
 
-#### Option B: Docker (Recommended)
+See **[install_on_proxmox.md](docs/install_on_proxmox.md)** for full details.
+
+---
+
+### Option B: Docker (Recommended for Most Users)
+
+First, clone the repository:
+
+```bash
+git clone https://github.com/mscodemonkey/overtalkerr.git
+cd overtalkerr
+
+# Copy and edit environment template
+cp .env.example .env
+nano .env  # Configure MEDIA_BACKEND_URL and MEDIA_BACKEND_API_KEY
+```
+
+Then build and run:
 
 ```bash
 # Build the image

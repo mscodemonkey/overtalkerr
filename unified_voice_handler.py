@@ -661,8 +661,20 @@ class UnifiedVoiceHandler:
 
         # Check if media is already available
         if chosen.get('_isAvailable'):
-            speech = f"{title} is already in your library! You can watch it now."
-            return VoiceResponse(speech=speech, should_end_session=True)
+            # They said "Yes" to "Were you thinking of a different one?"
+            # This means YES, show me a different one - so move to next result
+            idx = idx + 1
+            state['index'] = idx
+            save_state(request.user_id, request.session_id, state)
+
+            if idx >= len(results):
+                speech = "That's all the results I have. Try starting a new search."
+                return VoiceResponse(speech=speech, should_end_session=True)
+
+            # Present next result
+            next_item = results[idx]
+            speech = present_result(next_item, idx, len(results))
+            return VoiceResponse(speech=speech)
 
         # Check if media is being processed
         if chosen.get('_isProcessing'):

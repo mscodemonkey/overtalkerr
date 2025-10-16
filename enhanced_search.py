@@ -198,6 +198,34 @@ class SearchEnhancer:
         return result
 
     @staticmethod
+    def is_low_quality_result(result: Dict[str, Any]) -> bool:
+        """
+        Detect low-quality results that should be filtered out.
+
+        Filters based on:
+        - No votes (voteCount = 0)
+        - Very low popularity (< 1.0)
+        - Missing poster
+        - Short/weird overviews
+        """
+        vote_count = result.get('voteCount', 0)
+        popularity = result.get('popularity', 0)
+        poster = result.get('posterPath')
+        overview = result.get('overview', '')
+
+        # Filter if: no votes AND low popularity AND no poster
+        if vote_count == 0 and popularity < 1.0 and not poster:
+            return True
+
+        # Filter if overview is suspiciously short or weird
+        if overview and len(overview) < 30:
+            # Allow short overviews if the item has some popularity/votes
+            if vote_count == 0 and popularity < 1.0:
+                return True
+
+        return False
+
+    @staticmethod
     def fuzzy_match_results(query: str, results: List[Dict[str, Any]], threshold: int = 70) -> List[Dict[str, Any]]:
         """
         Re-rank results using intelligent matching with priority tiers:
@@ -205,6 +233,8 @@ class SearchEnhancer:
         2. Titles starting with the query
         3. Titles containing the query
         4. Fuzzy matches
+
+        Also filters out low-quality results.
 
         Args:
             query: Search query
@@ -221,6 +251,10 @@ class SearchEnhancer:
         scored_results = []
 
         for result in results:
+            # Skip low-quality results
+            if SearchEnhancer.is_low_quality_result(result):
+                logger.debug(f"Filtering low-quality result: {result.get('title', 'unknown')} ({result.get('releaseDate', 'no date')})")
+                continue
             title = result.get('_title', result.get('title', result.get('name', '')))
             title_lower = title.lower().strip()
 

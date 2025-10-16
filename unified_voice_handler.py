@@ -166,19 +166,34 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None,
     # Varied opening phrases based on attempt number
     # Use attempt % 6 to cycle through 6 different phrasings
     phrases = [
-        f"What about {title_part}?",
-        f"How about {title_part}?",
-        f"This one? {title_part.capitalize()}.",
-        f"What about this one? {title_part.capitalize()}.",
-        f"Have I got it right this time? {title_part.capitalize()}.",
-        f"Did I nail it? {title_part.capitalize()}.",
+        f"What about {title_part}",
+        f"How about {title_part}",
+        f"This one? {title_part.capitalize()}",
+        f"What about this one? {title_part.capitalize()}",
+        f"Have I got it right this time? {title_part.capitalize()}",
+        f"Did I nail it? {title_part.capitalize()}",
     ]
 
     # Use modulo to cycle through, or random if attempt is too high
     if attempt < len(phrases):
-        return phrases[attempt % len(phrases)]
+        speech = phrases[attempt % len(phrases)]
     else:
-        return random.choice(phrases)
+        speech = random.choice(phrases)
+
+    # Add availability status and question
+    # CONSISTENT LOGIC: Yes = "that's the one", No = "show me next"
+    if item.get('_isAvailable'):
+        speech += ". This is already in your library, so you can watch it now. Is that the one you were thinking of?"
+    elif item.get('_isPartiallyAvailable'):
+        speech += ". This is partially in your library. Is that the one you want?"
+    elif item.get('_isProcessing'):
+        speech += ". This is currently being downloaded. Is that the one you want?"
+    elif item.get('_isPending'):
+        speech += ". This has already been requested and is pending approval. Is that the one you want?"
+    else:
+        speech += ". Is that the one you want?"
+
+    return speech
 
 
 def build_availability_message(item: Dict[str, Any], season_number: Optional[int] = None) -> str:

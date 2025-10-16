@@ -348,16 +348,23 @@
       <div class="section">
         <div class="section-title">💾 Database</div>
 
+        <div class="alert alert-info" style="display: block; margin-bottom: 15px;">
+          <strong>💡 Default Recommended:</strong> Overtalkerr uses SQLite to remember conversation context between voice requests (e.g., when you say "No" to iterate through results). The database is created automatically - no setup required! Only change this if you have specific requirements like high availability.
+        </div>
+
         <div class="form-group">
           <label for="databaseUrl">Database URL</label>
-          <input type="text" id="databaseUrl" name="DATABASE_URL" placeholder="sqlite:///./data/overtalkerr.db">
-          <span class="help-text">SQLite, PostgreSQL, or MySQL connection string</span>
+          <input type="text" id="databaseUrl" name="DATABASE_URL" placeholder="sqlite:///./overtalkerr.db">
+          <span class="help-text">
+            <strong>Default:</strong> sqlite:///./overtalkerr.db (recommended)<br>
+            <strong>Advanced:</strong> postgresql://user:pass@host/db or mysql://user:pass@host/db
+          </span>
         </div>
 
         <div class="form-group">
           <label for="sessionTtl">Session Cleanup (hours)</label>
           <input type="text" id="sessionTtl" name="SESSION_TTL_HOURS" placeholder="24">
-          <span class="help-text">Delete conversation states older than this many hours</span>
+          <span class="help-text">Automatically delete old conversation states after this many hours (default: 24)</span>
         </div>
       </div>
 

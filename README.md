@@ -4,7 +4,7 @@ Request movies and TV shows using **Alexa**, **Google Assistant**, or **Siri**! 
 
 > **⚠️ BETA SOFTWARE**: Overtalkerr is currently in beta testing. While we've worked hard to make it stable and feature-complete, please use at your own risk and report any issues you encounter on [GitHub Issues](https://github.com/mscodemonkey/overtalkerr/issues). Your feedback helps make it better!
 
-> **🚀 Proxmox Users**: Install in seconds with our LXC helper script! See [PROXMOX.md](PROXMOX.md)
+> **🚀 Proxmox Users**: Install in seconds with our LXC helper script! See [install_on_proxmox.md](docs/install_on_proxmox.md)
 
 A self-hostable multi-platform voice assistant backend that works with **Overseerr**, **Jellyseerr**, and **Ombi**:
 
@@ -41,7 +41,7 @@ The backend automatically detects your media request service (Overseerr, Jellyse
 
 Overtalkerr supports the three most widely-used media request managers in the self-hosting community. If you're using a different request platform, we'd love to hear about it! [Open an issue on GitHub](https://github.com/mscodemonkey/overtalkerr/issues) to discuss potential support.
 
-📚 **[See Backend Configuration Guide](BACKENDS.md)** for setup details and compatibility notes.
+📚 **[See Backend Configuration Guide](docs/connect_to_request_apps.md)** for setup details and compatibility notes.
 
 ### Capabilities
 - **🔍 Enhanced Search**:
@@ -60,7 +60,7 @@ Overtalkerr supports the three most widely-used media request managers in the se
 - **Persistent State**: SQLite-based conversation state with automatic cleanup
 - **Test Harness**: Beautiful web UI for testing without any voice device
 
-📚 **[See Enhanced Search Features Guide](ENHANCED_SEARCH.md)** for examples and advanced usage!
+📚 **[See Enhanced Search Features Guide](docs/enhanced_search.md)** for examples and advanced usage!
 
 ### Production Ready
 - Comprehensive error handling and retry logic
@@ -115,7 +115,7 @@ Perfect for homelab users! One-command LXC container installation:
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
 ```
 
-This creates a lightweight LXC container with everything pre-configured. See **[PROXMOX.md](PROXMOX.md)** for full details.
+This creates a lightweight LXC container with everything pre-configured. See **[install_on_proxmox.md](docs/install_on_proxmox.md)** for full details.
 
 #### Option B: Docker (Recommended)
 
@@ -171,16 +171,12 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 **Powered by:** ask-sdk-python (modern SDK)
 **Endpoint:** `https://your-domain.com/` (POST)
 
-1. **Create Skill** in [Alexa Developer Console](https://developer.amazon.com/alexa/console/ask)
-2. **Invocation Name**: `overtalkerr`
-3. **Import Model**: Upload [`interactionModel.json`](interactionModel.json)
-   - Build > JSON Editor > Paste contents > Save & Build
-4. **Configure Endpoint**:
-   - HTTPS endpoint: `https://your-domain.com/`
-   - Certificate: Select appropriate SSL option
-5. **Test**: Enable testing in Development mode
-   - "Ask Overtalkerr to download Jurassic World"
-   - "Download season 2 of Breaking Bad"
+**Quick Setup:**
+1. Create skill in [Alexa Developer Console](https://developer.amazon.com/alexa/console/ask)
+2. Set invocation name: `overtalkerr`
+3. Import the interaction model from `alexa/interactionModel.json`
+4. Configure HTTPS endpoint with your Overtalkerr URL
+5. Enable testing and start using!
 
 **Features Supported:**
 - ✅ Full conversational flow (Yes/No)
@@ -189,7 +185,7 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 - ✅ Upcoming releases
 - ✅ Request verification
 
-📚 See [`interactionModel.json`](interactionModel.json) for complete intent configuration
+📚 **[Complete Alexa Setup Guide](docs/how_to_setup_alexa.md)** - Step-by-step instructions with troubleshooting
 
 ---
 
@@ -214,7 +210,7 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 - ✅ Suggestion chips (Yes/No buttons)
 - ✅ Rich cards
 
-📚 See [`dialogflow_agent.zip_instructions.md`](dialogflow_agent.zip_instructions.md) for detailed setup
+📚 **[Complete Google Assistant Setup Guide](docs/how_to_setup_google_assistant.md)** - Detailed walkthrough with examples
 
 ---
 
@@ -238,7 +234,7 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 - ✅ Optional parameters (year, season)
 - ⚠️ Limited conversation flow (requires additional shortcuts)
 
-📚 See [`siri_shortcuts_setup.md`](siri_shortcuts_setup.md) for complete guide with examples
+📚 **[Complete Siri Setup Guide](docs/how_to_setup_siri.md)** - Easy step-by-step tutorial for iOS users
 
 ---
 
@@ -274,6 +270,8 @@ Notes:
 
 All configuration is managed through environment variables in `.env`:
 
+> **💡 Database Note**: Overtalkerr uses a SQLite database to remember conversation context between voice requests (e.g., when you say "No" to iterate through search results). The database is created automatically - no setup required! It's a single file that persists across restarts and is automatically cleaned up (old conversations are deleted after 24 hours).
+
 ### Required Settings
 
 ```bash
@@ -298,9 +296,13 @@ LOG_FORMAT=json
 LOG_LEVEL=INFO
 MOCK_BACKEND=false
 
-# Database
+# Database (stores conversation state - required for multi-turn dialogs)
+# DEFAULT: SQLite - zero setup, just works! No need to change this.
 DATABASE_URL=sqlite:///./overtalkerr.db
 SESSION_TTL_HOURS=24  # Auto-cleanup old conversations
+
+# Note: Advanced users can use PostgreSQL/MySQL, but SQLite is recommended
+# for typical deployments. See .env.example for alternative database URLs.
 
 # Security (for test endpoints)
 BASIC_AUTH_USER=admin

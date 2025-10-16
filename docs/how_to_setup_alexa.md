@@ -73,7 +73,7 @@ This is where the magic happens! Instead of manually creating all the intents, w
 
 ### Step 1: Get the Interaction Model File
 
-1. In your Overtalkerr project folder, find the file: `docs/interactionModel.json`
+1. In your Overtalkerr project folder, find the file: `alexa/interactionModel.json`
 2. Open it in a text editor (Notepad, TextEdit, VS Code, etc.)
 3. Select everything (Ctrl+A or Cmd+A) and copy it (Ctrl+C or Cmd+C)
 
@@ -398,7 +398,7 @@ Stuck on something?
 ## Resources
 
 - **Alexa Developer Console**: [developer.amazon.com/alexa/console/ask](https://developer.amazon.com/alexa/console/ask)
-- **Interaction Model File**: [interactionModel.json](interactionModel.json)
+- **Interaction Model File**: [interactionModel.json](../alexa/interactionModel.json)
 - **Alexa Skill Documentation**: [developer.amazon.com/docs/custom-skills](https://developer.amazon.com/docs/custom-skills)
 
 ---

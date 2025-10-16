@@ -1,336 +1,383 @@
-# Backend Configuration Guide
+# Configuring Your Media Request Backend
 
-Overtalkerr supports three popular media request services: **Overseerr**, **Jellyseerr**, and **Ombi**. The backend type is automatically detected - just configure your base URL and API key!
+Hey there! So you've got Overtalkerr set up and now you need to connect it to your media request system. Great! Let's get that configured! 🎬
 
-## Supported Backends
+The cool thing about Overtalkerr is that it works with **three different backends** - Overseerr, Jellyseerr, and Ombi. Even better? It **automatically detects** which one you're using! You just need to tell it where to find your backend and give it an API key. Easy!
+
+## Which Backend Should I Use?
+
+Don't have one yet? Here's a quick guide:
 
 ### Overseerr
-The original media request manager for Plex.
+**Best for:** Plex users who want a modern, polished request manager
 
-**Features:**
-- Full TMDB integration
-- User-based quotas
-- 4K support
-- Discord/Slack/Email notifications
+The original and most popular choice! Overseerr is actively developed, has a beautiful UI, and tons of features like user quotas, 4K support, and Discord notifications.
 
-**API Compatibility:** ✅ Full support
+**Get it:** [overseerr.dev](https://overseerr.dev/)
 
 ### Jellyseerr
-A fork of Overseerr designed for Jellyfin users.
+**Best for:** Jellyfin users
 
-**Features:**
-- Same as Overseerr
-- Optimized for Jellyfin integration
-- 100% API compatible with Overseerr
+This is a fork of Overseerr specifically designed for Jellyfin instead of Plex. It looks identical to Overseerr and has all the same features - it's just optimized for Jellyfin!
 
-**API Compatibility:** ✅ Full support (inherits Overseerr implementation)
+**Get it:** [github.com/Fallenbagel/jellyseerr](https://github.com/Fallenbagel/jellyseerr)
 
 ### Ombi
-An alternative media request platform supporting Plex, Jellyfin, and Emby.
+**Best for:** Users who want multi-server support or were using Ombi before Overseerr existed
 
-**Features:**
-- Multi-media server support (Plex/Jellyfin/Emby)
-- User management and quotas
-- Notifications and integrations
-- Different API structure than Overseerr
+Ombi has been around longer and supports Plex, Jellyfin, AND Emby. It has a different API structure, but Overtalkerr handles that automatically.
 
-**API Compatibility:** ✅ Full support (custom implementation)
+**Get it:** [ombi.io](https://ombi.io/)
+
+> **💡 Already using one of these?** Perfect! Skip to the [Configuration](#configuration) section below!
+
+---
 
 ## Configuration
 
+Alright, let's connect Overtalkerr to your backend! This is super simple - just two steps.
+
 ### Step 1: Get Your API Key
 
-#### For Overseerr/Jellyseerr:
-1. Log in to your Overseerr/Jellyseerr instance
-2. Go to **Settings** → **General**
-3. Scroll down to **API Key** section
-4. Copy the API key
+An API key is like a password that lets Overtalkerr talk to your backend. Here's how to find it:
 
-#### For Ombi:
-1. Log in to your Ombi instance
-2. Go to **Settings** → **Ombi**
-3. Find the **API Key** field
-4. Copy the API key
+#### If you're using Overseerr or Jellyseerr:
 
-### Step 2: Configure Environment Variables
+1. Open your Overseerr/Jellyseerr web interface in your browser
+2. Log in (you'll need admin access)
+3. Click **Settings** in the sidebar
+4. Click **General**
+5. Scroll down until you see **API Key**
+6. There it is! Click the **Copy** button next to it
 
-Edit your `.env` file:
+That's it! Keep that key handy - you'll need it in a second.
+
+#### If you're using Ombi:
+
+1. Open your Ombi web interface in your browser
+2. Log in (you'll need admin access)
+3. Click **Settings** in the sidebar
+4. Click **Ombi** (under Configuration section)
+5. Look for the **API Key** field
+6. Copy that key!
+
+**Important:** Make sure you're getting the API key from Settings → Ombi, NOT from your user settings!
+
+### Step 2: Add It to Your Configuration
+
+Now let's tell Overtalkerr where your backend lives!
+
+#### Option 1: Use the Web Configuration UI (Easiest!)
+
+1. Open your browser and go to: `http://your-overtalkerr-server:5000/config/ui`
+2. In the **Media Request Backend** section:
+   - **Backend URL**: Enter your backend's URL (like `https://requests.yourdomain.com`)
+   - **Backend API Key**: Paste the API key you just copied
+3. Click **Test Connection** to make sure it works!
+4. If the test succeeds, click **Save & Restart**
+
+Done! Overtalkerr will restart and automatically detect which backend you're using! 🎉
+
+#### Option 2: Edit the .env File Manually
+
+If you prefer the command line:
+
+1. Open your `.env` file in a text editor
+2. Find these lines and update them:
 
 ```bash
-# Your backend base URL (no trailing slash)
-MEDIA_BACKEND_URL=https://request.example.com
+# Your backend's URL (no trailing slash!)
+MEDIA_BACKEND_URL=https://requests.yourdomain.com
 
-# Your backend API key
-MEDIA_BACKEND_API_KEY=your-api-key-here
-
-# Optional: Mock mode for testing
-MOCK_BACKEND=false
+# Your backend's API key (paste it here)
+MEDIA_BACKEND_API_KEY=your-api-key-goes-here
 ```
 
-### Step 3: Start Overtalkerr
+3. Save the file
+4. Restart Overtalkerr
 
-When Overtalkerr starts, it will automatically detect which backend you're using:
+When it starts up, check the logs - you should see something like:
 
 ```
 INFO: Detected Jellyseerr backend
 INFO: Initialized JellyseerrBackend
 ```
 
-or
+Perfect! That means it's working!
 
+---
+
+## How Does Auto-Detection Work?
+
+Curious how Overtalkerr figures out which backend you're using? Here's the magic:
+
+1. **First, it tries the Overseerr/Jellyseerr API** at `/api/v1/status`
+   - If it gets a response, it checks the version string
+   - If it contains "jellyseerr" → You're using Jellyseerr!
+   - If it doesn't → You're using Overseerr!
+
+2. **If that didn't work, it tries the Ombi API** at `/api/v1/Status`
+   - If it gets a response → You're using Ombi!
+
+3. **If nothing worked** → It assumes Overseerr and hopes for the best!
+
+You don't need to do anything special - it all happens automatically when Overtalkerr starts up!
+
+---
+
+## Testing Your Setup
+
+Let's make sure everything is working!
+
+### Quick Test via Web UI
+
+1. Make sure Overtalkerr is running
+2. Open your browser to: `http://localhost:5000/test` (or your server's address)
+3. Try searching for a popular movie like "Jurassic World"
+4. You should see results! If you do, it's working! 🎉
+
+At the bottom of the test page, you'll see which backend it detected.
+
+### Check the Logs
+
+Want to see what's happening behind the scenes? Enable debug logging!
+
+1. Edit your `.env` file:
+   ```bash
+   LOG_LEVEL=DEBUG
+   ```
+
+2. Restart Overtalkerr
+
+3. Watch the logs - you'll see detailed information like:
+   ```
+   INFO: Detected Jellyseerr backend
+   DEBUG: Searching backend: query='Jurassic World', media_type=movie
+   DEBUG: Found 5 results from backend
+   ```
+
+This is super helpful for troubleshooting!
+
+---
+
+## The Cool Part: Smart Duplicate Prevention
+
+Here's one of Overtalkerr's best features - it **prevents duplicate requests automatically**!
+
+Your backend (whether it's Overseerr, Jellyseerr, or Ombi) already syncs with your media server (Plex, Jellyfin, or Emby). It knows what you have and what's being downloaded. Overtalkerr uses that information to give you helpful feedback:
+
+### What You'll Hear
+
+**"This is already in your library!"**
+- The movie/show is fully available in your media server
+- You can watch it right now!
+- Overtalkerr **blocks** the request - no need to download it again!
+
+**Example:**
 ```
-INFO: Detected Ombi backend
-INFO: Initialized OmbiBackend
-```
-
-## How Auto-Detection Works
-
-Overtalkerr probes your backend API to determine the type:
-
-1. **Tries Overseerr/Jellyseerr API** (`/api/v1/status`):
-   - If successful, checks the version string
-   - If contains "jellyseerr" → Jellyseerr
-   - Otherwise → Overseerr
-
-2. **Tries Ombi API** (`/api/v1/Status`):
-   - If successful → Ombi
-
-3. **Fallback**:
-   - If detection fails → defaults to Overseerr
-
-## Backend-Specific Notes
-
-### Overseerr & Jellyseerr
-
-Both use identical APIs, so they share the same implementation:
-
-- Search endpoint: `GET /api/v1/search`
-- Request endpoint: `POST /api/v1/request`
-- Authentication: `X-Api-Key` header
-- Season selection: `{"seasons": [1, 2, 3]}` in request payload
-
-**Example Request:**
-```json
-{
-  "mediaId": 12345,
-  "mediaType": "tv",
-  "seasons": [2]
-}
-```
-
-### Ombi
-
-Ombi has a different API structure:
-
-- Search endpoints:
-  - Movies: `GET /api/v1/Search/movie/{query}`
-  - TV: `GET /api/v1/Search/tv/{query}`
-- Request endpoints:
-  - Movies: `POST /api/v1/Request/movie`
-  - TV: `POST /api/v1/Request/tv`
-- Authentication: `ApiKey` header (different from Overseerr!)
-- Season selection: More complex format with episode arrays
-
-**Example Request:**
-```json
-{
-  "tvDbId": 12345,
-  "requestAll": false,
-  "seasons": [
-    {
-      "seasonNumber": 2,
-      "episodes": []
-    }
-  ]
-}
-```
-
-**Important Ombi Differences:**
-1. Uses TVDB IDs instead of TMDB IDs for TV shows
-2. Requires fetching show details before requesting
-3. Separate endpoints for movies and TV
-4. Different header name for API key
-
-Overtalkerr handles all these differences automatically!
-
-## Testing Your Configuration
-
-### Test via Web UI
-
-1. Start Overtalkerr
-2. Navigate to `http://localhost:5000/test`
-3. Try searching for a movie or TV show
-4. The results will show which backend is being used
-
-### Test via Logs
-
-Enable debug logging in `.env`:
-
-```bash
-LOG_LEVEL=DEBUG
+You: "Alexa, ask Overtalkerr to download Jurassic Park"
+Alexa: "I found Jurassic Park from 1993. This is already in your library! You can watch it now."
 ```
 
-You'll see detailed logs showing:
-- Which backend was detected
-- API calls being made
-- Response data
+---
 
-Example log output:
-```json
-{
-  "timestamp": "2025-10-16T10:30:00Z",
-  "level": "INFO",
-  "message": "Detected Jellyseerr backend"
-}
-{
-  "timestamp": "2025-10-16T10:30:05Z",
-  "level": "DEBUG",
-  "message": "Searching backend: query='Jurassic World', media_type=movie"
-}
+**"This is currently being downloaded"**
+- The media has been approved and Radarr/Sonarr is downloading it
+- It'll be in your library soon!
+- Overtalkerr **blocks** the request - it's already on the way!
+
+**Example:**
+```
+You: "Hey Google, ask Overtalkerr to download Breaking Bad"
+Google: "I found Breaking Bad from 2008. This is currently being downloaded. It should be available soon!"
 ```
 
-## Mock Mode for Testing
+---
 
-You can test Overtalkerr without a real backend:
+**"This has already been requested and is pending approval"**
+- Someone already requested it, but it hasn't been approved yet
+- An admin needs to approve it first
+- Overtalkerr **blocks** the request - no duplicate pending requests!
 
-```bash
-MOCK_BACKEND=true
+**Example:**
+```
+You: "Alexa, ask Overtalkerr to download The Matrix"
+Alexa: "The Matrix has already been requested and is waiting for approval."
 ```
 
-This will:
-- Skip backend auto-detection
-- Return fake search results
-- Simulate successful requests
-- Perfect for development and testing
+---
+
+**"This is partially in your library" (TV shows only)**
+- Some episodes or seasons are available
+- Others might be missing
+- Overtalkerr **allows** the request if you're asking for a specific missing season
+- You'll be **informed** about what's already there
+
+---
+
+### Why This Is Awesome
+
+1. **Saves bandwidth** - No downloading the same thing twice!
+2. **Saves disk space** - No duplicate files cluttering your server
+3. **Better experience** - You get clear feedback about what's available
+4. **Easier for admins** - Fewer duplicate requests to sort through
+
+### The Best Part?
+
+Overtalkerr **doesn't need** to connect directly to Plex, Jellyfin, or Emby! All the availability information comes from your backend, which already knows what's in your library. One API connection, no extra setup needed!
+
+---
 
 ## Troubleshooting
 
 ### "Could not detect backend type, defaulting to Overseerr"
 
-**Cause:** Auto-detection failed to connect to any backend API.
+**What this means:** Overtalkerr couldn't connect to your backend to figure out which type it is.
 
-**Solutions:**
-1. Check your `MEDIA_BACKEND_URL` is correct
-2. Verify your `MEDIA_BACKEND_API_KEY` is valid
-3. Ensure the backend is accessible from Overtalkerr
-4. Check firewall rules
-5. Review logs for connection errors
+**Try these fixes:**
+
+1. **Check your URL** - Make sure `MEDIA_BACKEND_URL` is correct
+   - It should be something like `https://requests.yourdomain.com`
+   - No trailing slash!
+   - Make sure it's the URL you actually use to access your backend
+
+2. **Test the URL** - Open it in your browser
+   - Can you see your backend's login page?
+   - If not, the URL is wrong or your backend is down
+
+3. **Check your API key** - Make sure `MEDIA_BACKEND_API_KEY` is correct
+   - Try copying it again from your backend's settings
+   - Make sure you didn't accidentally include extra spaces
+
+4. **Test connectivity** - From your Overtalkerr server, try:
+   ```bash
+   curl https://your-backend-url/api/v1/status
+   ```
+   - If this fails, there's a network issue
+   - Check firewalls, DNS, etc.
+
+5. **Check the logs** - Look for error messages that might give you a clue
+
+---
 
 ### "Invalid API key or insufficient permissions"
 
-**Cause:** Authentication failed.
+**What this means:** The API key isn't working.
 
-**Solutions:**
-1. Verify your API key is correct
-2. Check if the API key has expired
-3. For Ombi: Ensure you're using the API key from Settings → Ombi (not User settings)
-4. Regenerate the API key in your backend
+**Try these fixes:**
+
+1. **Double-check the API key** - Copy it again from your backend
+2. **Regenerate it** - In your backend's settings, generate a new API key
+3. **For Ombi users** - Make SURE you're using the API key from Settings → Ombi, NOT from user settings!
+4. **Check permissions** - Make sure the API key has admin permissions
+
+---
 
 ### "Request to backend timed out"
 
-**Cause:** Network connectivity issues.
+**What this means:** Your backend is too slow to respond or not responding at all.
 
-**Solutions:**
-1. Check if backend is running
-2. Test connectivity: `curl https://your-backend.com/api/v1/status`
-3. Increase timeout in `media_backends.py` if needed
-4. Check network latency
+**Try these fixes:**
 
-### Different Results Between Backends
+1. **Is the backend running?** - Check if you can access it in your browser
+2. **Network issues?** - Is there a firewall blocking the connection?
+3. **Backend overloaded?** - Is your backend server struggling? Check its CPU/memory usage
+4. **Try manually:**
+   ```bash
+   curl -H "X-Api-Key: your-key" https://your-backend-url/api/v1/search?query=test
+   ```
+   If this takes forever, the problem is with your backend, not Overtalkerr
 
-**Expected behavior:** Different backends may return different results because:
-- Ombi uses TVDB instead of TMDB
-- Search algorithms differ
+---
+
+### The results look different than what I see in my backend
+
+**This is normal!** Different backends work differently:
+
+- **Ombi** uses TVDB for TV shows, while **Overseerr/Jellyseerr** use TMDB
+  - Different databases sometimes have different info!
+- Search algorithms are different
 - Available metadata varies
 
-Overtalkerr normalizes results to provide a consistent experience.
+Overtalkerr tries its best to normalize everything and give you consistent results!
 
-## Media Status Tracking
+---
 
-One of Overtalkerr's most powerful features is **automatic duplicate prevention**. All three backends (Overseerr, Jellyseerr, and Ombi) track media availability by syncing with your media servers (Plex, Jellyfin, or Emby), and Overtalkerr intelligently uses this information to prevent duplicate requests.
+## Mock Mode (For Testing)
 
-### How It Works
+Want to test Overtalkerr without having a real backend connected? No problem!
 
-When you search for media, Overtalkerr checks the current status and tells you:
+1. Edit your `.env` file:
+   ```bash
+   MOCK_BACKEND=true
+   ```
 
-**"This is already in your library!"**
-- Media is fully available in Plex/Jellyfin/Emby
-- You can watch it right now
-- Request is **blocked** - no duplicate created
+2. Restart Overtalkerr
 
-**"This is currently being downloaded"**
-- Media is approved and actively downloading via Radarr/Sonarr
-- It will be available soon
-- Request is **blocked** - already in progress
+Now it will:
+- Skip trying to connect to a real backend
+- Return fake search results (like "Jurassic World" and "The Matrix")
+- Pretend requests succeed
 
-**"This has already been requested and is pending approval"**
-- Request exists but hasn't been approved yet
-- Waiting for admin approval
-- Request is **blocked** - duplicate pending request
+This is perfect for:
+- Development
+- Testing the voice interfaces without setting up a full backend
+- Demonstrating Overtalkerr to someone
 
-**"This is partially in your library"** *(TV shows only)*
-- Some episodes/seasons are available
-- Other episodes/seasons might be missing
-- Request is **allowed** if you're requesting a specific missing season
-- User is **informed** about partial availability
+Just remember to set it back to `false` when you're ready to use it for real!
 
-### Status Information
+---
 
-Behind the scenes, Overtalkerr tracks these statuses:
+## Switching Backends
 
-| Status | Overseerr/Jellyseerr Code | Ombi Field | Meaning |
-|--------|---------------------------|------------|---------|
-| Unknown | `1` | N/A | Media server status unknown |
-| Pending | `2` | `requested=true, approved=false` | Requested, awaiting approval |
-| Processing | `3` | `approved=true, available=false` | Downloading via Radarr/Sonarr |
-| Partially Available | `4` | N/A | Some content available (TV shows) |
-| Available | `5` | `available=true` | Fully in your library |
-| Deleted | `6` | N/A | Previously available, now removed |
+Moving from Overseerr to Jellyseerr? Or from Ombi to Overseerr? No problem!
 
-### Examples
+1. **Get your new backend's API key** (follow the steps above)
 
-**Example 1: Already Available**
-```
-User: "Alexa, ask Overtalkerr to download Jurassic Park"
-Overtalkerr: "I found the movie Jurassic Park, released in 1993. This is already in your library. Is that the one you want?"
-User: "Yes"
-Overtalkerr: "Jurassic Park is already in your library! You can watch it now."
-```
+2. **Update your configuration:**
+   - Use the config UI at `/config/ui`, OR
+   - Edit `.env` and change `MEDIA_BACKEND_URL` and `MEDIA_BACKEND_API_KEY`
 
-**Example 2: Currently Downloading**
-```
-User: "Alexa, ask Overtalkerr to download Breaking Bad"
-Overtalkerr: "I found the TV show Breaking Bad, released in 2008. This is currently being downloaded. Is that the one you want?"
-User: "Yes"
-Overtalkerr: "Breaking Bad is already being downloaded. It should be available soon!"
-```
+3. **Restart Overtalkerr**
 
-**Example 3: Pending Approval**
-```
-User: "Alexa, ask Overtalkerr to download The Matrix"
-Overtalkerr: "I found the movie The Matrix, released in 1999. This has already been requested and is pending approval. Is that the one you want?"
-User: "Yes"
-Overtalkerr: "The Matrix has already been requested and is waiting for approval."
-```
+That's it! It'll automatically detect the new backend and start using it. No code changes, no complicated migration!
 
-### Benefits
+---
 
-1. **Saves bandwidth** - No duplicate downloads
-2. **Reduces server load** - Prevents redundant requests to Radarr/Sonarr
-3. **Better user experience** - Clear feedback about media status
-4. **Admin-friendly** - Fewer duplicate requests to manage
+## Behind the Scenes: How It Works
 
-### No Direct Server Connection Required
+Want to know the technical details? Here you go!
 
-Overtalkerr **does not** need to connect directly to Plex, Jellyfin, or Emby. All availability information comes from your backend (Overseerr/Jellyseerr/Ombi), which already syncs with your media servers.
+### Overseerr & Jellyseerr
 
-This means:
-- ✅ One API connection (to your backend)
-- ✅ No additional permissions needed
-- ✅ Works through reverse proxies
-- ✅ Status is always current (synced by backend)
+These two use the **exact same API**, so Overtalkerr uses the same implementation for both:
 
-## API Compatibility Matrix
+- **Search:** `GET /api/v1/search?query=jurassic`
+- **Request:** `POST /api/v1/request` with JSON body
+- **Authentication:** Uses the `X-Api-Key` header
+- **Season selection:** Sends `{"seasons": [2]}` in the request
+
+### Ombi
+
+Ombi does things differently:
+
+- **Search:** Separate endpoints for movies and TV
+  - Movies: `GET /api/v1/Search/movie/jurassic`
+  - TV: `GET /api/v1/Search/tv/breaking bad`
+- **Request:** Also separate endpoints
+  - Movies: `POST /api/v1/Request/movie`
+  - TV: `POST /api/v1/Request/tv`
+- **Authentication:** Uses `ApiKey` header (note: different name!)
+- **IDs:** Uses TVDB IDs for TV shows instead of TMDB IDs
+- **Season selection:** More complex format with episode arrays
+
+**But you don't need to worry about any of this!** Overtalkerr handles all the differences automatically.
+
+---
+
+## API Compatibility
+
+Here's what works with each backend:
 
 | Feature | Overseerr | Jellyseerr | Ombi |
 |---------|-----------|------------|------|
@@ -338,131 +385,76 @@ This means:
 | Search TV Shows | ✅ | ✅ | ✅ |
 | Request Movies | ✅ | ✅ | ✅ |
 | Request TV Shows | ✅ | ✅ | ✅ |
-| Season Selection | ✅ | ✅ | ✅ |
-| Fuzzy Search | ✅ | ✅ | ✅ |
+| Request Specific Seasons | ✅ | ✅ | ✅ |
 | Auto-Detection | ✅ | ✅ | ✅ |
-| **Media Status Tracking** | ✅ | ✅ | ✅ |
-| **Duplicate Prevention** | ✅ | ✅ | ✅ |
-| **Availability Detection** | ✅ | ✅ | ✅ |
-| 4K Requests | ✅ | ✅ | ⚠️ (via separate request) |
+| Duplicate Prevention | ✅ | ✅ | ✅ |
+| Availability Tracking | ✅ | ✅ | ✅ |
+| 4K Requests | ✅ | ✅ | ⚠️ (possible but requires separate request) |
 
-## Advanced Configuration
+Everything just works! 🎉
 
-### Forcing a Specific Backend
+---
 
-While not recommended (auto-detection is reliable), you can force a backend type by modifying `media_backends.py`:
+## Advanced Stuff (For Power Users)
 
-```python
-# In app.py or config initialization
-from media_backends import BackendFactory, BackendType
+### Custom Timeouts
 
-# Force Ombi
-backend = BackendFactory.create(
-    backend_type=BackendType.OMBI,
-    base_url="https://ombi.example.com",
-    api_key="your-api-key"
-)
-```
-
-### Custom Backend Timeout
-
-Edit `media_backends.py` to change request timeouts:
+If your backend is slow, you can increase the timeout. Edit `media_backends.py`:
 
 ```python
 class MediaBackend(ABC):
     def __init__(self, base_url: str, api_key: str):
         # ...
-        self.timeout = (10, 60)  # (connect_timeout, read_timeout) in seconds
+        self.timeout = (10, 60)  # (connect, read) in seconds
+        # Increase these numbers if needed!
 ```
 
 ### Retry Configuration
 
-Modify retry behavior in `media_backends.py`:
+By default, Overtalkerr retries failed requests 3 times. Want to change that? Edit `media_backends.py`:
 
 ```python
 retry_strategy = Retry(
-    total=5,              # Number of retries (default: 3)
-    backoff_factor=2,     # Wait time multiplier (default: 1)
+    total=5,              # More retries
+    backoff_factor=2,     # Wait longer between retries
     status_forcelist=[429, 500, 502, 503, 504],
 )
 ```
 
-## Switching Between Backends
+### Force a Specific Backend Type
 
-If you're switching from one backend to another:
+Don't want auto-detection? You can force a specific backend type in your code, but honestly, auto-detection is so reliable that you probably don't need to!
 
-1. **Update `.env`** with new base URL and API key
-2. **Restart Overtalkerr** - it will auto-detect the new backend
-3. **Test the integration** using the web UI
-4. **No code changes needed!**
+---
 
-Example switching from Overseerr to Jellyseerr:
+## Need Help?
 
-```bash
-# Old configuration
-MEDIA_BACKEND_URL=https://overseerr.example.com
-MEDIA_BACKEND_API_KEY=old-api-key
+Stuck on something?
 
-# New configuration
-MEDIA_BACKEND_URL=https://jellyseerr.example.com
-MEDIA_BACKEND_API_KEY=new-api-key
-```
+1. **Check this guide again** - The answer might be in a section you skipped!
+2. **Enable debug logging** - Set `LOG_LEVEL=DEBUG` in your `.env` file
+3. **Test with the web UI** - Go to `/test` and try searching there
+4. **Check your backend's docs:**
+   - [Overseerr Docs](https://docs.overseerr.dev/)
+   - [Jellyseerr GitHub](https://github.com/Fallenbagel/jellyseerr)
+   - [Ombi Docs](https://docs.ombi.app/)
+5. **Open a GitHub issue** - I'm happy to help! [github.com/mscodemonkey/overtalkerr/issues](https://github.com/mscodemonkey/overtalkerr/issues)
 
-Restart and you're done!
+---
 
-## Contributing Backend Support
+## Want to Add Support for Another Backend?
 
-Want to add support for another backend? Here's how:
+Got another media request system you'd like Overtalkerr to support? Awesome! Here's how to add it:
 
-1. **Create a new backend class** in `media_backends.py`:
-   ```python
-   class NewBackend(MediaBackend):
-       def search(self, query, media_type):
-           # Implement search logic
-           pass
+1. Create a new class in `media_backends.py` that inherits from `MediaBackend`
+2. Implement the `search()` and `request_media()` methods
+3. Add detection logic to `BackendFactory.detect_backend_type()`
+4. Test it thoroughly!
+5. Update this documentation
+6. Submit a pull request!
 
-       def request_media(self, media_id, media_type, season):
-           # Implement request logic
-           pass
-   ```
+I'd love to expand backend support - let's make Overtalkerr work with everything! 🚀
 
-2. **Add detection logic** to `BackendFactory.detect_backend_type()`:
-   ```python
-   # Try NewBackend API
-   try:
-       headers = {"Authorization": f"Bearer {api_key}"}
-       resp = requests.get(f"{base_url}/api/status", headers=headers, timeout=5)
-       if resp.ok:
-           return BackendType.NEWBACKEND
-   except:
-       pass
-   ```
+---
 
-3. **Update the factory** to instantiate your backend:
-   ```python
-   elif backend_type == BackendType.NEWBACKEND:
-       return NewBackend(base_url, api_key)
-   ```
-
-4. **Test thoroughly** with the new backend
-5. **Update documentation** in this file
-6. **Submit a pull request!**
-
-## Questions?
-
-If you encounter issues with a specific backend:
-
-1. Check the [Troubleshooting](#troubleshooting) section
-2. Enable debug logging: `LOG_LEVEL=DEBUG`
-3. Review backend-specific API documentation
-4. Open an issue on GitHub with:
-   - Backend type and version
-   - Logs (redact sensitive info!)
-   - Steps to reproduce
-
-## Resources
-
-- [Overseerr Documentation](https://docs.overseerr.dev/)
-- [Jellyseerr Documentation](https://github.com/Fallenbagel/jellyseerr)
-- [Ombi Documentation](https://docs.ombi.app/)
-- [Overtalkerr GitHub](https://github.com/yourusername/overtalkerr)
+Happy requesting! Your voice-controlled media downloads just got a whole lot smarter! 🎬🍿

@@ -1,212 +1,190 @@
-# Proxmox Installation Guide
+# Installing Overtalkerr on Proxmox VE
 
-Overtalkerr can be installed on Proxmox VE using a helper script similar to those found at [community-scripts.github.io/ProxmoxVE](https://community-scripts.github.io/ProxmoxVE/).
+Hey Proxmox user! If you're running a homelab with Proxmox, you're going to love this - Overtalkerr can be installed with a single command, just like those awesome community scripts from [community-scripts.github.io/ProxmoxVE](https://community-scripts.github.io/ProxmoxVE/)!
 
-## Quick Install
+We've created an LXC helper script that sets everything up for you automatically. No Docker, no complicated configuration files, just a clean Debian container running Overtalkerr. Let's get you set up!
 
-To create a new Overtalkerr LXC container on Proxmox VE, run this command from your Proxmox VE Shell:
+---
+
+## The One-Command Install
+
+Ready? Open your **Proxmox VE Shell** and run this:
 
 ```bash
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
 ```
 
+That's it! The script will ask you a few questions and then create a complete, working Overtalkerr installation. ✨
+
+---
+
 ## What Gets Installed
 
-The script will:
+The installation script does all the heavy lifting for you:
 
-1. ✅ Create an unprivileged Debian 12 LXC container
-2. ✅ Install Python 3.11+ and required dependencies
-3. ✅ Clone the Overtalkerr repository to `/opt/overtalkerr`
-4. ✅ Set up a Python virtual environment
-5. ✅ Install all Python dependencies
-6. ✅ Create a systemd service for automatic startup
-7. ✅ Configure Gunicorn as the production WSGI server
-8. ✅ Generate a secure random SECRET_KEY
-9. ✅ Set up logging and data directories
+1. ✅ Creates an unprivileged Debian 12 LXC container
+2. ✅ Installs Python 3.11+ and all system dependencies
+3. ✅ Clones the Overtalkerr repository to `/opt/overtalkerr`
+4. ✅ Sets up a Python virtual environment (keeps things clean!)
+5. ✅ Installs all Python dependencies
+6. ✅ Creates a systemd service for automatic startup and restarts
+7. ✅ Configures Gunicorn as the production WSGI server
+8. ✅ Generates a secure random SECRET_KEY
+9. ✅ Sets up logging and data directories with proper permissions
+
+When it's done, you'll have a fully functional Overtalkerr instance running on port 5000!
+
+---
 
 ## Default Container Settings
 
-- **OS**: Debian 12 (Bookworm)
-- **Type**: Unprivileged Container
-- **CPU Cores**: 2
-- **RAM**: 1024 MB (1 GB)
-- **Disk**: 4 GB
-- **Tags**: media, voice-assistant
+The script creates a lightweight LXC container with sensible defaults:
+
+- **OS**: Debian 12 (Bookworm) - rock solid and lightweight
+- **Type**: Unprivileged Container (more secure!)
+- **CPU Cores**: 2 (plenty for voice requests)
+- **RAM**: 1024 MB (1 GB) - more than enough
+- **Disk**: 4 GB (includes OS, app, and room for logs)
+- **Tags**: `media`, `voice-assistant` (helps you find it in Proxmox!)
 - **Port**: 5000
 
-## Post-Installation Configuration
+> **💡 Want different specs?** Choose "Advanced" when the script asks, and you can customize everything!
 
-After installation, you **must** configure your backend settings. You can do this either via the **web UI** (easiest) or by **editing the config file** directly:
+---
 
-### Option 1: Web Configuration UI (Recommended)
+## Post-Installation: Configure Your Backend
 
-Open your browser and navigate to:
+Okay, the app is installed, but it doesn't know where your Overseerr/Jellyseerr/Ombi server is yet. Let's fix that!
+
+You have two options - the web UI (super easy!) or editing the config file directly:
+
+### Option 1: Web Configuration UI (Recommended! 🌟)
+
+This is the easiest way - just point your browser to:
 
 ```
 http://YOUR-LXC-IP:5000/config/ui
 ```
 
-The web interface lets you:
-- ✅ Configure all settings with a user-friendly form
-- ✅ Test your backend connection before saving
-- ✅ Validate configuration in real-time
-- ✅ See helpful hints for each setting
+Replace `YOUR-LXC-IP` with your container's IP address (you can find this in the Proxmox web UI or by running `ip addr` in the container).
 
-**Required settings:**
-1. **Backend URL**: Your Overseerr/Jellyseerr/Ombi URL
-2. **Backend API Key**: Your API key (Settings → General → API Key)
-3. **Public URL**: Your public HTTPS URL (for voice assistants)
+The web interface gives you:
+- ✅ A user-friendly form for all settings
+- ✅ "Test Connection" button to verify your backend works
+- ✅ Real-time validation (catches mistakes before you save!)
+- ✅ Helpful hints for each setting
+- ✅ "Save & Restart" button that applies changes automatically
 
-After saving, click the "Test Connection" button to verify it works, then restart the service.
+**What you need to fill in:**
+1. **Backend URL**: Your Overseerr/Jellyseerr/Ombi URL (like `http://192.168.1.50:5055`)
+2. **Backend API Key**: Copy it from your backend's settings
+   - **Overseerr/Jellyseerr**: Settings → General → API Key
+   - **Ombi**: Settings → Ombi → API Key
+3. **Public URL**: Your public HTTPS URL (for voice assistants to reach you)
+   - Like `https://overtalkerr.yourdomain.com`
+   - You'll set up the reverse proxy next!
 
-### Option 2: Edit Configuration File
+After entering everything, click **"Test Connection"** to make sure it works, then click **"Save & Restart"**!
+
+---
+
+### Option 2: Edit Configuration File Directly
+
+Prefer the command line? No problem!
 
 ```bash
+# Connect to your LXC container
+pct enter <CONTAINER_ID>
+
+# Edit the config file
 nano /opt/overtalkerr/.env
 ```
 
-Update these required settings:
+Find these lines and update them:
 
 ```bash
 # Your media request backend URL (Overseerr, Jellyseerr, or Ombi)
 MEDIA_BACKEND_URL=http://your-overseerr-instance:5055
 
-# Your backend API key
+# Your backend API key (get it from Settings → General → API Key)
 MEDIA_BACKEND_API_KEY=your-api-key-here
 
 # Your public HTTPS URL (for Alexa/Google/Siri to reach)
 PUBLIC_BASE_URL=https://overtalkerr.yourdomain.com
 ```
 
-**Where to find your API key:**
-- **Overseerr/Jellyseerr**: Settings → General → API Key
-- **Ombi**: Settings → Ombi → API Key
-
-### Restart the Service
+Save the file (Ctrl+O, Enter, Ctrl+X in nano), then restart:
 
 ```bash
 systemctl restart overtalkerr
 ```
+
+---
 
 ### Verify It's Running
 
+Check that everything started up correctly:
+
 ```bash
 systemctl status overtalkerr
 ```
 
-You should see:
+You should see something like:
 ```
 ● overtalkerr.service - Overtalkerr - Voice Assistant for Media Requests
    Loaded: loaded (/etc/systemd/system/overtalkerr.service; enabled)
-   Active: active (running)
+   Active: active (running) since ...
 ```
 
-## Accessing Overtalkerr
+If you see `active (running)`, you're golden! 🎉
 
-After installation:
+---
 
-- **⚙️ Configuration UI**: `http://YOUR-LXC-IP:5000/config/ui` - **Start here!**
-- **🧪 Web UI Test Interface**: `http://YOUR-LXC-IP:5000/test`
-- **❤️ Health Check**: `http://YOUR-LXC-IP:5000/test/info`
-- **🔌 API Endpoint**: `http://YOUR-LXC-IP:5000/`
+## What You Can Access Now
 
-## Updating Overtalkerr
+Your new Overtalkerr instance has these endpoints ready:
 
-To update to the latest version, run the installation script again:
+- **⚙️ Configuration UI**: `http://YOUR-LXC-IP:5000/config/ui` - **Start here first!**
+- **🧪 Test Interface**: `http://YOUR-LXC-IP:5000/test` - Try voice requests from your browser!
+- **❤️ Health Check**: `http://YOUR-LXC-IP:5000/test/info` - Check if everything is healthy
+- **🔌 API Endpoint**: `http://YOUR-LXC-IP:5000/` - For Alexa/Google/Siri to connect to
 
+Try opening the test interface and searching for a movie to make sure your backend connection works!
+
+---
+
+## Setting Up HTTPS (Required for Voice Assistants!)
+
+Alexa, Google Assistant, and Siri all require HTTPS connections. You'll need to set up a reverse proxy with a valid SSL certificate.
+
+> **💡 Don't panic!** If you're already using Nginx Proxy Manager (NPM) or similar, this is super easy!
+
+### Using Nginx Proxy Manager (Easiest!)
+
+1. Open Nginx Proxy Manager
+2. Click **"Add Proxy Host"**
+3. Fill in the details:
+   - **Domain Names**: `overtalkerr.yourdomain.com` (whatever subdomain you want)
+   - **Scheme**: `http` (yes, HTTP - we're proxying to the LXC)
+   - **Forward Hostname/IP**: Your LXC container's IP
+   - **Forward Port**: `5000`
+4. Go to the **SSL** tab:
+   - Enable **"Force SSL"**
+   - Request a new Let's Encrypt certificate
+5. Save!
+
+Now update your `.env` with the new HTTPS URL:
 ```bash
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
+PUBLIC_BASE_URL=https://overtalkerr.yourdomain.com
 ```
 
-The update process will:
-1. ✅ Detect existing installation
-2. ✅ Stop the service
-3. ✅ Create a backup of your current installation
-4. ✅ Pull latest code from GitHub
-5. ✅ Update Python dependencies
-6. ✅ Run database migrations (if needed)
-7. ✅ Restart the service
+Restart: `systemctl restart overtalkerr`
 
-**Note**: Your `.env` configuration file is preserved during updates.
-
-## Advanced Options
-
-When running the installation script, you can choose **Advanced** mode to customize:
-
-- Container ID
-- Hostname
-- Disk size
-- CPU cores
-- RAM allocation
-- Network settings (static IP, bridge, VLAN)
-- SSH access
-- And more...
-
-## Container Management
-
-### Start/Stop/Restart
-
-```bash
-# Stop Overtalkerr
-systemctl stop overtalkerr
-
-# Start Overtalkerr
-systemctl start overtalkerr
-
-# Restart Overtalkerr
-systemctl restart overtalkerr
-
-# Check status
-systemctl status overtalkerr
-```
-
-### View Logs
-
-```bash
-# Real-time logs
-journalctl -u overtalkerr -f
-
-# Last 100 lines
-journalctl -u overtalkerr -n 100
-
-# Logs since boot
-journalctl -u overtalkerr -b
-```
-
-### Access Container Shell
-
-From Proxmox VE Shell:
-
-```bash
-pct enter <CONTAINER_ID>
-```
-
-Or use the Proxmox web UI: Container → Console
-
-## File Locations
-
-- **Application**: `/opt/overtalkerr/`
-- **Configuration**: `/opt/overtalkerr/.env`
-- **Database**: `/opt/overtalkerr/data/overtalkerr.db`
-- **Virtual Environment**: `/opt/overtalkerr/venv/`
-- **Systemd Service**: `/etc/systemd/system/overtalkerr.service`
-- **Logs**: `journalctl -u overtalkerr` or `/opt/overtalkerr/logs/` (if file logging enabled)
-
-## Reverse Proxy Setup
-
-For production use with Alexa/Google Assistant/Siri, you need HTTPS. Set up a reverse proxy:
-
-### Using Nginx Proxy Manager (NPM)
-
-1. In NPM, add a new Proxy Host
-2. **Domain Names**: `overtalkerr.yourdomain.com`
-3. **Scheme**: `http`
-4. **Forward Hostname/IP**: `<LXC-IP>`
-5. **Forward Port**: `5000`
-6. **SSL**: Enable "Force SSL" and request a Let's Encrypt certificate
-7. Save
+Done! Now voice assistants can reach your server securely! 🔒
 
 ### Using Nginx Directly
+
+If you're using plain Nginx, here's a config snippet:
 
 ```nginx
 server {
@@ -217,7 +195,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://<LXC-IP>:5000;
+        proxy_pass http://YOUR-LXC-IP:5000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -226,98 +204,206 @@ server {
 }
 ```
 
-### Update .env After Reverse Proxy
+---
+
+## Updating Overtalkerr
+
+Got a notification that there's a new version? Updating is easy - just run the install script again!
 
 ```bash
-PUBLIC_BASE_URL=https://overtalkerr.yourdomain.com
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
 ```
 
-Then restart: `systemctl restart overtalkerr`
+The script is smart - it will:
+1. ✅ Detect that Overtalkerr is already installed
+2. ✅ Stop the service gracefully
+3. ✅ Create a backup of your current installation (just in case!)
+4. ✅ Pull the latest code from GitHub
+5. ✅ Update Python dependencies
+6. ✅ Run any database migrations if needed
+7. ✅ Restart the service with the new version
+
+**Important:** Your `.env` configuration is preserved! You won't lose your settings.
+
+---
+
+## Managing Your Container
+
+### Start/Stop/Restart the Service
+
+```bash
+# Stop Overtalkerr
+systemctl stop overtalkerr
+
+# Start Overtalkerr
+systemctl start overtalkerr
+
+# Restart Overtalkerr (after config changes)
+systemctl restart overtalkerr
+
+# Check if it's running
+systemctl status overtalkerr
+```
+
+### View the Logs
+
+Logs are super helpful for troubleshooting!
+
+```bash
+# Watch logs in real-time
+journalctl -u overtalkerr -f
+
+# See the last 100 lines
+journalctl -u overtalkerr -n 100
+
+# See logs since the last boot
+journalctl -u overtalkerr -b
+```
+
+### Access the Container Shell
+
+From Proxmox VE Shell:
+
+```bash
+pct enter <CONTAINER_ID>
+```
+
+Or just use the **Console** button in the Proxmox web UI!
+
+---
+
+## File Locations (For Reference)
+
+Everything lives in `/opt/overtalkerr/`:
+
+- **Application Code**: `/opt/overtalkerr/`
+- **Configuration File**: `/opt/overtalkerr/.env` - Your settings live here!
+- **Database**: `/opt/overtalkerr/data/overtalkerr.db` - Conversation state
+- **Virtual Environment**: `/opt/overtalkerr/venv/` - Python dependencies
+- **Systemd Service**: `/etc/systemd/system/overtalkerr.service`
+- **Logs**: `journalctl -u overtalkerr` or `/opt/overtalkerr/logs/` (if file logging is enabled)
+
+---
 
 ## Troubleshooting
 
-### Service Won't Start
+### "The service won't start!"
+
+Check what went wrong:
 
 ```bash
-# Check service status
+# See the service status
 systemctl status overtalkerr
 
-# View detailed logs
+# View detailed logs (last 50 lines)
 journalctl -u overtalkerr -n 50
-
-# Common issues:
-# 1. Missing or invalid .env configuration
-# 2. Database permissions
-# 3. Port 5000 already in use
 ```
 
-### Can't Connect to Backend
+**Common issues:**
+1. **Missing `.env` configuration** - Did you configure your backend URL and API key?
+2. **Database permissions** - Usually fixed by restarting the service
+3. **Port 5000 already in use** - Is something else using that port?
+
+---
+
+### "Can't connect to my backend!"
+
+Test the connection manually:
 
 ```bash
-# Test backend connectivity from LXC
+# For Overseerr/Jellyseerr:
 curl -H "X-Api-Key: YOUR-API-KEY" "http://your-backend:5055/api/v1/status"
 
-# Or for Ombi:
+# For Ombi:
 curl -H "ApiKey: YOUR-API-KEY" "http://your-backend:3579/api/v1/Status"
 ```
 
-### Check Configuration
+If this fails, the problem is network connectivity or a wrong URL/API key.
+
+---
+
+### "I need to reset everything!"
+
+No problem, here's how to start fresh:
 
 ```bash
-# View current configuration (API keys will be visible!)
-cat /opt/overtalkerr/.env
-
-# Validate Python dependencies
-cd /opt/overtalkerr
-/opt/overtalkerr/venv/bin/pip check
-```
-
-### Reset to Defaults
-
-If you need to start fresh:
-
-```bash
-# Stop service
+# Stop the service
 systemctl stop overtalkerr
 
-# Backup current config
+# Backup your current config (just in case)
 cp /opt/overtalkerr/.env /opt/overtalkerr/.env.backup
 
-# Delete database (will lose conversation state)
+# Delete the database (you'll lose conversation history)
 rm /opt/overtalkerr/data/overtalkerr.db
 
-# Restart service
+# Restart
 systemctl start overtalkerr
 ```
 
-## Uninstall
+The database will be recreated automatically!
 
-To completely remove Overtalkerr:
+---
+
+## Advanced Options
+
+When you run the install script, it asks if you want **"Default"** or **"Advanced"** settings.
+
+Choose **Advanced** if you want to customize:
+- Container ID number
+- Hostname
+- Disk size (need more space for logs?)
+- CPU cores (running on a beefy server?)
+- RAM allocation
+- Network settings (static IP, bridge, VLAN tag)
+- SSH access
+- And more!
+
+Most people are fine with the defaults, but the option is there if you need it!
+
+---
+
+## Uninstalling
+
+Changed your mind? No hard feelings! Here's how to remove Overtalkerr:
+
+**Option 1: Remove just the app (keep the LXC container)**
 
 ```bash
-# Stop and disable service
+# Stop and disable the service
 systemctl stop overtalkerr
 systemctl disable overtalkerr
 
-# Remove service file
+# Remove the service file
 rm /etc/systemd/system/overtalkerr.service
 systemctl daemon-reload
 
-# Remove application directory
+# Remove the application
 rm -rf /opt/overtalkerr
-
-# (Optional) Delete the entire LXC container from Proxmox
 ```
 
-Or simply delete the LXC container from the Proxmox web UI.
+**Option 2: Delete the entire LXC container (easiest)**
 
-## Support & Documentation
+Just delete the container from the Proxmox web UI. Done!
 
-- 📚 **Main Documentation**: [README.md](README.md)
-- 🔧 **Backend Configuration**: [BACKENDS.md](BACKENDS.md)
-- 🔍 **Search Features**: [ENHANCED_SEARCH.md](ENHANCED_SEARCH.md)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/mscodemonkey/overtalkerr/issues)
+---
+
+## Need Help?
+
+Stuck on something?
+
+1. **Check the logs first** - `journalctl -u overtalkerr -n 100`
+2. **Read the main docs:**
+   - 📚 [Main Documentation](../README.md)
+   - 🔧 [Backend Configuration](connect_to_request_apps.md)
+   - 🔍 [Enhanced Search Features](enhanced_search.md)
+3. **Open a GitHub issue** - I'm happy to help! [github.com/mscodemonkey/overtalkerr/issues](https://github.com/mscodemonkey/overtalkerr/issues)
+
+---
 
 ## Credits
 
-Installation script format inspired by [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE).
+Big thanks to the folks at [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE) for inspiring the installation script format! Their scripts are awesome, and I wanted to make Overtalkerr just as easy to install.
+
+---
+
+**Happy voice requesting! Your Proxmox homelab just got a whole lot cooler! 🎬🏠✨**

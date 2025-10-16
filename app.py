@@ -445,7 +445,8 @@ def test_yes():
 
     result = {
         "speech": voice_response.speech,
-        "end": voice_response.should_end_session
+        "end": voice_response.should_end_session,
+        "conversationId": conv_id
     }
 
     # Check if request was created
@@ -488,7 +489,8 @@ def test_no():
 
     result = {
         "speech": voice_response.speech,
-        "end": voice_response.should_end_session
+        "end": voice_response.should_end_session,
+        "conversationId": conv_id
     }
 
     if state:

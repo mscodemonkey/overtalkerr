@@ -34,13 +34,21 @@ Want to find "recent action movies"? Go ahead and say exactly that! No need to r
 | "new tv shows" | Shows from the last 6 months |
 | "upcoming releases" | Media coming in the next 90 days |
 | "coming soon" | Media in the next 60 days |
-| "this year" | Anything from the current year |
-| "last year" | Anything from last year |
+| "this year" | Current year + previous year (2-year buffer) |
+| "last year" | Previous 2 years (allows for mistakes) |
+| "a couple of years ago" | Last 5 years |
+| "a few years ago" | Last 10 years |
+| "in the 70s" or "in the 1970s" | 1970-1979 |
+| "in the noughties" | 2000-2009 |
+| "from 2015" | Exact year (2015) |
 
 **Try saying:**
 - "Download recent action movies"
 - "Get the latest comedy shows"
 - "Find upcoming superhero films"
+- "Download Superman from the 70s"
+- "Find movies from a couple of years ago"
+- "Get shows from the noughties"
 
 It just works! 🎉
 
@@ -116,9 +124,29 @@ No more "I couldn't find that" errors!
 "Get new comedy shows"
 "Find upcoming Marvel movies"
 "Download last year's best dramas"
+"Get Superman from the 70s"
+"Find movies from a couple of years ago"
+"Download shows from the noughties"
 ```
 
 Talk like you normally would!
+
+---
+
+### Year Filtering (Super Flexible!)
+
+```
+"Download Superman from 1978" → Exact year
+"Get movies from the 70s" → 1970-1979
+"Find shows from the 1990s" → 1990-1999
+"Download films from the noughties" → 2000-2009
+"Get movies from this year" → Current + last year
+"Find shows from last year" → Previous 2 years
+"Download movies from a couple of years ago" → Last 5 years
+"Get shows from a few years ago" → Last 10 years
+```
+
+Years work exactly how you'd say them naturally!
 
 ---
 

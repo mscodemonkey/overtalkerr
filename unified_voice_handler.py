@@ -760,6 +760,18 @@ class UnifiedVoiceHandler:
                 speech = "I don't have any results to show. Try a new search."
                 return VoiceResponse(speech=speech, should_end_session=True)
 
+        # Check if user wants to start a new search after running out of results
+        if state.get('pending_new_search_question'):
+            state['pending_new_search_question'] = False
+            save_state(request.user_id, request.session_id, state)
+
+            speech = f"{get_varied_ok()}. What would you like to download?"
+            return VoiceResponse(
+                speech=speech,
+                reprompt="What would you like to download?",
+                should_end_session=False
+            )
+
         # Check if user is confirming the "did you mean" suggestion
         if state.get('pending_did_you_mean_question'):
             # User said yes to the suggested title
@@ -915,6 +927,11 @@ class UnifiedVoiceHandler:
                 speech = "I don't have any results of that type. Try a new search."
                 return VoiceResponse(speech=speech, should_end_session=True)
 
+        # Check if user doesn't want to start a new search after running out of results
+        if state.get('pending_new_search_question'):
+            speech = f"{get_varied_ok()}. Goodbye!"
+            return VoiceResponse(speech=speech, should_end_session=True)
+
         # Check if user is declining to hear results from other years
         if state.get('pending_year_filter_question'):
             speech = f"{get_varied_ok()}. Try searching again with a different year or without the year."
@@ -932,11 +949,18 @@ class UnifiedVoiceHandler:
         idx = idx + 1
 
         if idx >= len(results):
-            speech = "That's all I could find. Do you want to search for something else?"
+            speech = "That's all I could find. Would you like to search for something else?"
+
+            # Set flag and save state for yes/no handling
+            state['pending_new_search_question'] = True
+            state['results'] = []  # Clear old results
+            state['index'] = 0
+            save_state(request.user_id, request.session_id, state)
+
             return VoiceResponse(
                 speech=speech,
-                reprompt="What would you like to download?",
-                should_end_session=True
+                reprompt="Would you like to search for something else?",
+                should_end_session=False  # Keep session open for yes/no
             )
 
         # Update state

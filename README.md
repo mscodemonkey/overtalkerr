@@ -48,9 +48,11 @@ Overtalkerr supports the three most widely-used media request managers in the se
 ### Capabilities
 - **🔍 Enhanced Search**:
   - Fuzzy matching handles typos and speech recognition errors
-  - Natural language temporal queries ("recent movies", "upcoming shows")
+  - Natural language temporal queries ("recent movies", "upcoming shows", "from the 70s", "a couple of years ago")
+  - Flexible year filtering (exact years, decades, relative ranges)
   - Genre extraction from queries ("scary movie", "funny show")
   - Smart result ranking with similarity scores
+  - Quality filtering to remove low-quality/spam results
 - **📊 Smart Availability Checking**:
   - Automatically detects if media is already in your library
   - Warns you before requesting duplicates

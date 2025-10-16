@@ -573,15 +573,8 @@ async function startSearch() {
     } else {
       setConv(data.conversationId);
       setSpeech(data.speech);
-      // Show buttons if there's an active conversation and it's asking a question
-      const isQuestion = data.speech.includes('Is that the one') ||
-                         data.speech.includes('you want') ||
-                         data.speech.includes('thinking of a different') ||
-                         data.speech.includes('Would you like') ||
-                         data.speech.includes('you looking for');
-      const showButtons = data.conversationId && isQuestion &&
-                          !data.speech.includes('requested') &&
-                          !data.speech.includes('already been');
+      // Show buttons if conversation is continuing (end is false)
+      const showButtons = data.conversationId && !data.end;
       addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       updateResultCounter(data.index, data.total);
@@ -617,23 +610,12 @@ async function sayYes() {
       setDebug(data);
     } else {
       setSpeech(data.speech);
-      // Show buttons if there's an active conversation and it's asking a question
-      const isQuestion = data.speech.includes('Is that the one') ||
-                         data.speech.includes('you want') ||
-                         data.speech.includes('thinking of a different') ||
-                         data.speech.includes('Would you like') ||
-                         data.speech.includes('you looking for') ||
-                         data.speech.includes('Did you mean');
-      const isFinalMessage = data.speech.includes('requested') && !data.speech.includes('thinking of a different') ||
-                             data.speech.includes('already been requested') ||
-                             data.speech.includes('done') && !data.speech.includes('thinking of a different') ||
-                             data.speech.includes('available soon') ||
-                             data.speech.includes('ready to watch');
-      const showButtons = data.conversationId && isQuestion && !isFinalMessage;
+      // Show buttons if conversation is continuing (end is false)
+      const showButtons = data.conversationId && !data.end;
       addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       // Reset conversation after successful request
-      if (data.speech.includes('done') || data.requested) {
+      if (data.end || data.requested) {
         setTimeout(() => {
           setConv(null);
           updateResultCounter(0, 0);
@@ -671,21 +653,8 @@ async function sayNo() {
       setDebug(data);
     } else {
       setSpeech(data.speech);
-      // Show buttons if there's an active conversation and it's asking a question
-      const isQuestion = data.speech.includes('Is that the one') ||
-                         data.speech.includes('you want') ||
-                         data.speech.includes('thinking of a different') ||
-                         data.speech.includes('Would you like') ||
-                         data.speech.includes('you looking for') ||
-                         data.speech.includes('Did you mean');
-      const isFinalMessage = data.speech.includes('That\'s all') ||
-                             data.speech.includes('Perfect!') ||
-                             data.speech.includes('requested') && !data.speech.includes('thinking of a different') ||
-                             data.speech.includes('already been requested') ||
-                             data.speech.includes('done') && !data.speech.includes('thinking of a different') ||
-                             data.speech.includes('available soon') ||
-                             data.speech.includes('ready to watch');
-      const showButtons = data.conversationId && isQuestion && !isFinalMessage;
+      // Show buttons if conversation is continuing (end is false)
+      const showButtons = data.conversationId && !data.end;
       addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       updateResultCounter(data.index, data.total);

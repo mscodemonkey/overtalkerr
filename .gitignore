@@ -66,4 +66,7 @@ htmlcov/
 *.bak
 *.bak2
 
+# Working documents (user-editable reference)
+VOICE_PROMPTS.md
+
 MIGRATION_SUMMARY.md

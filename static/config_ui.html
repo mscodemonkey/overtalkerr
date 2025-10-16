@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Overtalkerr Configuration</title>
   <style>
+    /* Skip to content link for keyboard users */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #667eea;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 4px 0;
+      z-index: 100;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -37,7 +54,7 @@
     }
 
     .subtitle {
-      color: #666;
+      color: #4b5563; /* Improved contrast */
       margin-bottom: 30px;
       font-size: 14px;
     }
@@ -108,7 +125,7 @@
 
     .help-text {
       font-size: 12px;
-      color: #666;
+      color: #4b5563; /* Improved contrast */
       margin-top: 4px;
       display: block;
     }
@@ -127,8 +144,14 @@
 
     input:focus,
     select:focus {
-      outline: none;
+      outline: 2px solid #667eea;
+      outline-offset: 2px;
       border-color: #667eea;
+    }
+
+    button:focus {
+      outline: 2px solid #5568d3;
+      outline-offset: 2px;
     }
 
     input:disabled {
@@ -150,6 +173,13 @@
       border-radius: 13px;
       cursor: pointer;
       transition: background 0.3s;
+      /* Make it keyboard accessible */
+      tabindex: 0;
+    }
+
+    .toggle:focus {
+      outline: 2px solid #667eea;
+      outline-offset: 2px;
     }
 
     .toggle.active {
@@ -294,41 +324,43 @@
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="container">
     <a href="/" class="nav-link">← Back to Dashboard</a>
 
-    <h1>⚙️ Overtalkerr Configuration</h1>
-    <p class="subtitle">Configure your voice assistant settings</p>
+    <main id="main-content">
+      <h1>⚙️ Overtalkerr Configuration</h1>
+      <p class="subtitle">Configure your voice assistant settings</p>
 
-    <div id="alert" class="alert"></div>
+      <div id="alert" class="alert" role="alert" aria-live="polite"></div>
 
-    <form id="configForm">
+      <form id="configForm" aria-label="Configuration settings form">
       <!-- Backend Configuration -->
       <div class="section">
         <div class="section-title">🎬 Media Request Backend</div>
 
         <div class="form-group">
           <label for="mediaBackendUrl">Backend URL</label>
-          <input type="url" id="mediaBackendUrl" name="MEDIA_BACKEND_URL" placeholder="http://your-backend:5055" required>
-          <span class="help-text">URL of your Overseerr, Jellyseerr, or Ombi instance</span>
+          <input type="url" id="mediaBackendUrl" name="MEDIA_BACKEND_URL" placeholder="http://your-backend:5055" required aria-required="true" aria-describedby="backend-url-help">
+          <span id="backend-url-help" class="help-text">URL of your Overseerr, Jellyseerr, or Ombi instance</span>
         </div>
 
         <div class="form-group">
           <label for="mediaBackendApiKey">Backend API Key</label>
           <div class="password-toggle">
-            <input type="password" id="mediaBackendApiKey" name="MEDIA_BACKEND_API_KEY" placeholder="Your API key" required>
-            <button type="button" class="password-toggle-btn" onclick="togglePassword('mediaBackendApiKey')">Show</button>
+            <input type="password" id="mediaBackendApiKey" name="MEDIA_BACKEND_API_KEY" placeholder="Your API key" required aria-required="true" aria-describedby="backend-key-help">
+            <button type="button" class="password-toggle-btn" onclick="togglePassword('mediaBackendApiKey')" aria-label="Toggle API key visibility" aria-pressed="false">Show</button>
           </div>
-          <span class="help-text">
+          <span id="backend-key-help" class="help-text">
             • Overseerr/Jellyseerr: Settings → General → API Key<br>
             • Ombi: Settings → Ombi → API Key
           </span>
         </div>
 
-        <button type="button" class="btn-test" onclick="testBackend()">
+        <button type="button" class="btn-test" onclick="testBackend()" aria-label="Test backend connection">
           🔌 Test Connection
         </button>
-        <div id="backendStatus" class="backend-status"></div>
+        <div id="backendStatus" class="backend-status" role="status" aria-live="polite"></div>
       </div>
 
       <!-- Flask Configuration -->
@@ -350,10 +382,10 @@
         </div>
 
         <div class="form-group">
-          <label>Mock Mode (Testing)</label>
+          <label id="mock-mode-label">Mock Mode (Testing)</label>
           <div class="toggle-container">
-            <div id="mockToggle" class="toggle" onclick="toggleMock()"></div>
-            <span id="mockLabel">Disabled</span>
+            <div id="mockToggle" class="toggle" onclick="toggleMock()" role="switch" aria-checked="false" aria-labelledby="mock-mode-label" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleMock();}"></div>
+            <span id="mockLabel" aria-live="polite">Disabled</span>
           </div>
           <input type="hidden" id="mockBackend" name="MOCK_BACKEND" value="false">
           <span class="help-text">Enable to test without a real backend (returns fake data)</span>
@@ -408,16 +440,17 @@
         </div>
       </div>
 
-      <div class="button-group">
-        <button type="button" class="btn-secondary" onclick="loadConfig()">🔄 Reload</button>
-        <button type="submit" class="btn-primary">💾 Save</button>
-        <button type="button" class="btn-primary" onclick="saveAndRestart()">💾 Save & Restart</button>
+      <div class="button-group" role="group" aria-label="Form actions">
+        <button type="button" class="btn-secondary" onclick="loadConfig()" aria-label="Reload configuration from server">🔄 Reload</button>
+        <button type="submit" class="btn-primary" aria-label="Save configuration">💾 Save</button>
+        <button type="button" class="btn-primary" onclick="saveAndRestart()" aria-label="Save configuration and restart service">💾 Save & Restart</button>
       </div>
     </form>
 
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #4b5563;">
       <strong>Tip:</strong> Use "Save & Restart" to apply changes immediately, or just "Save" if you'll restart manually later.
     </div>
+    </main>
   </div>
 
   <script>
@@ -585,6 +618,7 @@
       const isActive = toggle.classList.toggle('active');
       label.textContent = isActive ? 'Enabled' : 'Disabled';
       input.value = isActive ? 'true' : 'false';
+      toggle.setAttribute('aria-checked', isActive ? 'true' : 'false');
     }
 
     function togglePassword(fieldId) {
@@ -594,9 +628,11 @@
       if (field.type === 'password') {
         field.type = 'text';
         btn.textContent = 'Hide';
+        btn.setAttribute('aria-pressed', 'true');
       } else {
         field.type = 'password';
         btn.textContent = 'Show';
+        btn.setAttribute('aria-pressed', 'false');
       }
     }
 

@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Overtalkerr - Dashboard</title>
   <style>
+    /* Skip to content link for keyboard users */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: white;
+      color: #667eea;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 4px 0;
+      z-index: 100;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -177,12 +194,12 @@
 
     .recent-meta {
       font-size: 12px;
-      color: #999;
+      color: #6b7280; /* Improved contrast */
     }
 
     .recent-time {
       font-size: 12px;
-      color: #999;
+      color: #6b7280; /* Improved contrast */
       white-space: nowrap;
     }
 
@@ -226,6 +243,11 @@
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
 
+    .btn:focus {
+      outline: 2px solid white;
+      outline-offset: 2px;
+    }
+
     .loading {
       text-align: center;
       color: white;
@@ -252,7 +274,7 @@
     .empty-state {
       text-align: center;
       padding: 40px;
-      color: #999;
+      color: #6b7280; /* Improved contrast */
     }
 
     .empty-state-icon {
@@ -262,11 +284,12 @@
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="container">
-    <div class="header">
+    <header class="header" role="banner">
       <div class="logo-container">
         <!-- Overtalkerr Logo SVG -->
-        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Overtalkerr logo with microphone and sound waves">
           <!-- Outer circle with gradient -->
           <defs>
             <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -307,73 +330,75 @@
           <p class="tagline">Voice Assistant Dashboard</p>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div id="error" class="error" style="display: none;"></div>
-    <div id="loading" class="loading">Loading dashboard...</div>
+    <div id="error" class="error" role="alert" style="display: none;"></div>
+    <div id="loading" class="loading" role="status" aria-live="polite">Loading dashboard...</div>
 
-    <div id="dashboard" style="display: none;">
-      <div class="dashboard-grid">
+    <main id="main-content">
+      <div id="dashboard" style="display: none;">
+        <div class="dashboard-grid" role="region" aria-label="Dashboard statistics">
         <!-- System Status Card -->
-        <div class="card">
-          <div class="card-title">✅ System Status</div>
-          <div id="backend-status"></div>
+        <div class="card" role="article" aria-labelledby="system-status-title">
+          <div class="card-title" id="system-status-title">✅ System Status</div>
+          <div id="backend-status" role="status" aria-live="polite"></div>
           <div style="margin-top: 12px;">
-            <div style="font-size: 14px; color: #666; margin-bottom: 4px;">Backend Type</div>
+            <div style="font-size: 14px; color: #4b5563; margin-bottom: 4px;">Backend Type</div>
             <div id="backend-type" style="font-weight: 600; color: #667eea;"></div>
           </div>
           <div style="margin-top: 12px;">
-            <div style="font-size: 14px; color: #666; margin-bottom: 4px;">Configuration</div>
-            <div id="config-status"></div>
+            <div style="font-size: 14px; color: #4b5563; margin-bottom: 4px;">Configuration</div>
+            <div id="config-status" role="status"></div>
           </div>
         </div>
 
         <!-- Total Requests Card -->
-        <div class="card">
-          <div class="card-title">📊 Total Requests</div>
-          <div class="card-value" id="total-requests">0</div>
+        <div class="card" role="article" aria-labelledby="total-requests-title">
+          <div class="card-title" id="total-requests-title">📊 Total Requests</div>
+          <div class="card-value" id="total-requests" aria-label="Total requests count">0</div>
           <div class="card-subtitle">All time</div>
         </div>
 
         <!-- This Week Card -->
-        <div class="card">
-          <div class="card-title">📈 This Week</div>
-          <div class="card-value" id="week-requests">0</div>
+        <div class="card" role="article" aria-labelledby="week-requests-title">
+          <div class="card-title" id="week-requests-title">📈 This Week</div>
+          <div class="card-value" id="week-requests" aria-label="Requests this week">0</div>
           <div class="card-subtitle" id="today-subtitle">Today: 0</div>
         </div>
       </div>
 
       <!-- Recent Activity Card (full width) -->
-      <div class="card">
-        <div class="card-title">🕐 Recent Activity</div>
-        <ul id="recent-activity" class="recent-list">
+      <div class="card" role="region" aria-labelledby="recent-activity-title">
+        <div class="card-title" id="recent-activity-title">🕐 Recent Activity</div>
+        <ul id="recent-activity" class="recent-list" aria-label="Recent media requests">
           <li class="empty-state">
-            <div class="empty-state-icon">🎬</div>
+            <div class="empty-state-icon" aria-hidden="true">🎬</div>
             <div>No recent activity yet. Start making voice requests!</div>
           </li>
         </ul>
       </div>
 
       <!-- Action Buttons -->
-      <div class="actions">
-        <a href="/config" class="btn btn-primary">
-          <span>⚙️</span>
+      <nav class="actions" aria-label="Main navigation">
+        <a href="/config" class="btn btn-primary" aria-label="Go to configuration settings">
+          <span aria-hidden="true">⚙️</span>
           <span>Configuration</span>
         </a>
-        <a href="/test" class="btn btn-secondary">
-          <span>🧪</span>
+        <a href="/test" class="btn btn-secondary" aria-label="Go to test interface">
+          <span aria-hidden="true">🧪</span>
           <span>Test Interface</span>
         </a>
-        <a href="https://github.com/mscodemonkey/overtalkerr" target="_blank" class="btn btn-tertiary">
-          <span>📚</span>
+        <a href="https://github.com/mscodemonkey/overtalkerr" target="_blank" rel="noopener noreferrer" class="btn btn-tertiary" aria-label="View documentation on GitHub (opens in new tab)">
+          <span aria-hidden="true">📚</span>
           <span>Documentation</span>
         </a>
-      </div>
+      </nav>
     </div>
+    </main>
 
-    <div class="footer">
+    <footer class="footer" role="contentinfo">
       Overtalkerr v1.0 Beta • Voice Assistant for Media Requests
-    </div>
+    </footer>
   </div>
 
   <script>

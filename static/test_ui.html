@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Overtalkerr Test UI</title>
   <style>
+    /* Skip to content link for keyboard users */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 4px 0;
+      z-index: 100;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
     body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       margin: 20px;
@@ -24,7 +40,7 @@
       margin-top: 12px;
       font-weight: 600;
       font-size: 14px;
-      color: #374151;
+      color: #1f2937; /* Improved contrast from #374151 to #1f2937 */
     }
     input, select {
       width: 100%;
@@ -36,9 +52,14 @@
       transition: border-color 0.2s;
     }
     input:focus, select:focus {
-      outline: none;
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    button:focus {
+      outline: 2px solid #1e40af;
+      outline-offset: 2px;
     }
     button {
       padding: 10px 18px;
@@ -119,7 +140,7 @@
     }
     .result-counter {
       font-size: 13px;
-      color: #6b7280;
+      color: #4b5563; /* Improved contrast */
       font-weight: 600;
     }
     h2 {
@@ -137,7 +158,7 @@
       gap: 8px;
     }
     .description {
-      color: #6b7280;
+      color: #4b5563; /* Improved contrast from #6b7280 */
       font-size: 14px;
       line-height: 1.6;
       margin-bottom: 20px;
@@ -241,16 +262,18 @@
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="card">
     <a href="/" class="nav-link">← Back to Dashboard</a>
 
-    <h2>Overtalkerr Test UI</h2>
-    <div class="status-bar">
-      <div id="banner" class="pill">
-        <span class="loading"></span> Loading environment info…
+    <main id="main-content">
+      <h2>Overtalkerr Test UI</h2>
+      <div class="status-bar" role="status" aria-live="polite">
+        <div id="banner" class="pill">
+          <span class="loading"></span> Loading environment info…
+        </div>
+        <div id="resultCounter" class="result-counter hidden" aria-live="polite" aria-atomic="true"></div>
       </div>
-      <div id="resultCounter" class="result-counter hidden"></div>
-    </div>
 
     <p class="description">
       Simulate the Alexa flow without a device. Start a search, then confirm Yes/No to iterate results.
@@ -265,48 +288,48 @@
 
     <div class="row">
       <div>
-        <label>Title</label>
-        <input id="title" placeholder="Jurassic World" />
+        <label for="title">Title</label>
+        <input id="title" name="title" placeholder="Jurassic World" aria-label="Enter media title" aria-required="true" />
       </div>
       <div>
-        <label>Year (optional)</label>
-        <input id="year" placeholder="2015" />
+        <label for="year">Year (optional)</label>
+        <input id="year" name="year" placeholder="2015" aria-label="Enter release year (optional)" />
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label>Media Type</label>
-        <select id="mediaType">
+        <label for="mediaType">Media Type</label>
+        <select id="mediaType" name="mediaType" aria-label="Select media type">
           <option value="">Auto (mixed)</option>
           <option value="movie">Movie</option>
           <option value="tv">TV show</option>
         </select>
       </div>
       <div>
-        <label>Upcoming</label>
-        <select id="upcoming">
+        <label for="upcoming">Upcoming</label>
+        <select id="upcoming" name="upcoming" aria-label="Filter upcoming releases only">
           <option value="false">No</option>
           <option value="true">Yes</option>
         </select>
       </div>
     </div>
 
-    <div class="button-group">
-      <button id="btnStart" onclick="startSearch()">🔍 Start Search</button>
-      <button id="btnReset" class="secondary" onclick="resetConv()" title="Reset this conversation state" disabled>🔄 Reset</button>
-      <button id="btnPurge" class="danger" onclick="purgeAll()" title="Purge all saved state">🗑️ Purge All</button>
+    <div class="button-group" role="group" aria-label="Conversation controls">
+      <button id="btnStart" onclick="startSearch()" aria-label="Start search for media title">🔍 Start Search</button>
+      <button id="btnReset" class="secondary" onclick="resetConv()" title="Reset this conversation state" aria-label="Reset current conversation" disabled>🔄 Reset</button>
+      <button id="btnPurge" class="danger" onclick="purgeAll()" title="Purge all saved state" aria-label="Purge all conversations">🗑️ Purge All</button>
     </div>
 
-    <div style="margin-top: 16px;">
+    <div style="margin-top: 16px;" role="status" aria-live="polite">
       <strong>Conversation:</strong> <span id="conv" class="pill">(none)</span>
     </div>
 
     <h3>
       💬 Conversation Flow
-      <button class="secondary" style="float: right; margin-top: -4px; padding: 6px 12px; font-size: 12px;" onclick="clearConversation()">Clear</button>
+      <button class="secondary" style="float: right; margin-top: -4px; padding: 6px 12px; font-size: 12px;" onclick="clearConversation()" aria-label="Clear conversation history">Clear</button>
     </h3>
-    <div id="conversationFlow" class="conversation-flow">
+    <div id="conversationFlow" class="conversation-flow" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation history">
       <div class="empty-conversation">
         Start a search to begin the conversation...
       </div>
@@ -316,10 +339,11 @@
       📝 Latest Speech Response
       <span id="speechStatus"></span>
     </h3>
-    <pre id="speech">(No response yet)</pre>
+    <pre id="speech" role="status" aria-live="polite" aria-atomic="true">(No response yet)</pre>
 
     <h3>🐛 Debug Info</h3>
-    <pre id="debug">{}</pre>
+    <pre id="debug" aria-label="Debug information">{}</pre>
+    </main>
   </div>
 
 <script>
@@ -362,9 +386,9 @@ function renderConversation() {
 
   container.innerHTML = conversationHistory.map(msg => {
     const buttonsHtml = (!msg.isUser && msg.showButtons && msg.id === activeButtonMessageId) ? `
-      <div class="inline-buttons">
-        <button class="secondary" onclick="handleInlineYes('${msg.id}')">👍 Yes</button>
-        <button class="secondary" onclick="handleInlineNo('${msg.id}')">👎 No</button>
+      <div class="inline-buttons" role="group" aria-label="Response options">
+        <button class="secondary" onclick="handleInlineYes('${msg.id}')" aria-label="Confirm yes, this is the correct result">👍 Yes</button>
+        <button class="secondary" onclick="handleInlineNo('${msg.id}')" aria-label="Say no, show next result">👎 No</button>
       </div>
     ` : '';
 
@@ -684,6 +708,51 @@ document.getElementById('title').addEventListener('keypress', (e) => {
 });
 document.getElementById('year').addEventListener('keypress', (e) => {
   if (e.key === 'Enter' && !loading) startSearch();
+});
+
+// Keyboard shortcuts for accessibility
+document.addEventListener('keydown', (e) => {
+  // Only respond if there's an active conversation and we're not typing in an input
+  if (!conversationId || loading) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+  // Y key = Yes
+  if (e.key === 'y' || e.key === 'Y') {
+    e.preventDefault();
+    if (activeButtonMessageId) {
+      handleInlineYes(activeButtonMessageId);
+    }
+  }
+
+  // N key = No
+  if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault();
+    if (activeButtonMessageId) {
+      handleInlineNo(activeButtonMessageId);
+    }
+  }
+
+  // Escape key = Reset conversation
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (conversationId && !loading) {
+      resetConv();
+    }
+  }
+});
+
+// Announce keyboard shortcuts to screen readers on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const srAnnouncement = document.createElement('div');
+  srAnnouncement.setAttribute('role', 'status');
+  srAnnouncement.setAttribute('aria-live', 'polite');
+  srAnnouncement.style.position = 'absolute';
+  srAnnouncement.style.left = '-10000px';
+  srAnnouncement.style.width = '1px';
+  srAnnouncement.style.height = '1px';
+  srAnnouncement.style.overflow = 'hidden';
+  srAnnouncement.textContent = 'Keyboard shortcuts available: Press Y for Yes, N for No, Escape to reset conversation, Enter to start search';
+  document.body.appendChild(srAnnouncement);
 });
 </script>
 </body>

@@ -156,9 +156,10 @@ def search(query: str, media_type: Optional[str] = None) -> List[Dict[str, Any]]
 
 def pick_best(results: List[Dict[str, Any]], *, upcoming_only: bool, year_filter: Optional[str]) -> List[Dict[str, Any]]:
     """Return results sorted according to rules.
+    - Prioritizes intelligent match tier (_combined_score from fuzzy matching)
     - upcoming_only => release date in the future ranked first
     - year_filter => keep where releaseDate startswith(year)
-    - otherwise, sort by exact title match then by most recent release date desc
+    - otherwise, sort by match quality then by most recent release date desc
     """
     today = dt.date.today()
 
@@ -166,15 +167,21 @@ def pick_best(results: List[Dict[str, Any]], *, upcoming_only: bool, year_filter
     if year_filter:
         results = [r for r in results if (r.get("_releaseDate") or "").startswith(year_filter)]
 
-    def score(r: Dict[str, Any]) -> Tuple[int, int, Optional[dt.date]]:
+    def score(r: Dict[str, Any]) -> Tuple[int, int, int]:
         # Upcoming score: 1 if in future and upcoming_only requested
         rdate = r.get("_date")
         upcoming_score = 1 if upcoming_only and rdate and rdate > today else 0
-        # More recent is better
-        recency = rdate.toordinal() if rdate else 0
-        return (upcoming_score, recency, rdate)
 
-    # Primary sort: upcoming score desc, then recency desc
+        # Use intelligent match score if available (from fuzzy_match_results)
+        # This respects exact matches, starts-with, contains, etc.
+        match_quality = r.get("_combined_score", 0)
+
+        # More recent is better (but less important than match quality)
+        recency = rdate.toordinal() if rdate else 0
+
+        return (upcoming_score, match_quality, recency)
+
+    # Primary sort: upcoming score desc, match quality desc, then recency desc
     results_sorted = sorted(results, key=lambda r: score(r), reverse=True)
     return results_sorted
 

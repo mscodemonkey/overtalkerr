@@ -501,6 +501,12 @@ class UnifiedVoiceHandler:
 
         # Save state
         first = ranked[0]
+
+        # Debug logging: show all results in order
+        logger.info(f"Ranked results for '{media_title}' (total: {len(ranked)}):")
+        for i, result in enumerate(ranked[:10]):  # Show first 10
+            logger.info(f"  [{i}] {result.get('_title', 'unknown')} ({result.get('_releaseDate', 'no date')}) - Score: {result.get('_combined_score', 0)}, Tier: {result.get('_match_tier', 'N/A')}, Available: {result.get('_isAvailable', False)}")
+
         state = {
             'query': media_title,
             'media_type': media_type,
@@ -644,8 +650,11 @@ class UnifiedVoiceHandler:
             # They said "Yes" to "Were you thinking of a different one?"
             # This means YES, show me a different one - so move to next result
             # Skip to the next item that's NOT already in library
+            logger.info(f"Inverted Yes logic: current idx={idx}, current item={chosen.get('_title', 'unknown')} ({chosen.get('_releaseDate', 'no date')}), isAvailable={chosen.get('_isAvailable')}")
+
             idx = idx + 1
             while idx < len(results) and results[idx].get('_isAvailable'):
+                logger.info(f"Skipping idx={idx}: {results[idx].get('_title', 'unknown')} ({results[idx].get('_releaseDate', 'no date')}) - already in library")
                 idx = idx + 1
 
             state['index'] = idx
@@ -659,6 +668,7 @@ class UnifiedVoiceHandler:
             # Present next result
             next_item = results[idx]
             user_term = state.get('user_term')
+            logger.info(f"Presenting next item: idx={idx}, title={next_item.get('_title', 'unknown')} ({next_item.get('_releaseDate', 'no date')}), isAvailable={next_item.get('_isAvailable')}")
             speech = build_speech_for_next(next_item, user_term=user_term, attempt=idx)
             return VoiceResponse(speech=speech)
 

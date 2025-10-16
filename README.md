@@ -146,9 +146,15 @@ python migrate_db.py
 python app.py
 ```
 
-### 3. Test the Application
+### 3. Configure and Test
 
-Open your browser to `http://localhost:5000/test` and try searching for a movie!
+**Configuration UI** (recommended): Open `http://localhost:5000/config/ui` to:
+- Configure your media backend (Overseerr/Jellyseerr/Ombi)
+- Test your API connection
+- Adjust application settings
+- Save and automatically restart the service
+
+**Test UI**: Open `http://localhost:5000/test` to try searching for a movie without a voice device!
 
 ## 🎙️ Voice Platform Setup
 

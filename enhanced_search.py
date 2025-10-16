@@ -200,7 +200,11 @@ class SearchEnhancer:
     @staticmethod
     def fuzzy_match_results(query: str, results: List[Dict[str, Any]], threshold: int = 70) -> List[Dict[str, Any]]:
         """
-        Re-rank results using fuzzy matching.
+        Re-rank results using intelligent matching with priority tiers:
+        1. Exact matches
+        2. Titles starting with the query
+        3. Titles containing the query
+        4. Fuzzy matches
 
         Args:
             query: Search query
@@ -208,34 +212,62 @@ class SearchEnhancer:
             threshold: Minimum similarity score (0-100)
 
         Returns:
-            Re-ranked results with similarity scores
+            Re-ranked results with match tier and similarity scores
         """
         if not results:
             return results
 
+        query_lower = query.lower().strip()
         scored_results = []
 
         for result in results:
             title = result.get('_title', result.get('title', result.get('name', '')))
+            title_lower = title.lower().strip()
+
+            # Determine match tier
+            match_tier = 4  # Default: fuzzy match
+            bonus = 0
+
+            # Tier 1: Exact match (highest priority)
+            if title_lower == query_lower:
+                match_tier = 1
+                bonus = 1000
+            # Tier 2: Starts with query
+            elif title_lower.startswith(query_lower):
+                match_tier = 2
+                bonus = 500
+            # Tier 3: Contains query as whole word
+            elif f" {query_lower} " in f" {title_lower} ":
+                match_tier = 3
+                bonus = 250
+            # Tier 3.5: Contains query anywhere (but not as whole word)
+            elif query_lower in title_lower:
+                match_tier = 3
+                bonus = 100
 
             # Calculate multiple similarity scores
-            ratio = fuzz.ratio(query.lower(), title.lower())
-            partial = fuzz.partial_ratio(query.lower(), title.lower())
-            token_sort = fuzz.token_sort_ratio(query.lower(), title.lower())
-            token_set = fuzz.token_set_ratio(query.lower(), title.lower())
+            ratio = fuzz.ratio(query_lower, title_lower)
+            partial = fuzz.partial_ratio(query_lower, title_lower)
+            token_sort = fuzz.token_sort_ratio(query_lower, title_lower)
+            token_set = fuzz.token_set_ratio(query_lower, title_lower)
 
             # Use the best score
             best_score = max(ratio, partial, token_sort, token_set)
 
-            if best_score >= threshold:
+            # For exact/starts/contains matches, always include regardless of threshold
+            # For fuzzy matches, apply threshold
+            if match_tier <= 3 or best_score >= threshold:
                 result_copy = result.copy()
                 result_copy['_fuzzy_score'] = best_score
+                result_copy['_match_tier'] = match_tier
+                # Combined score for sorting: tier matters most, then fuzzy score
+                result_copy['_combined_score'] = bonus + best_score
                 scored_results.append(result_copy)
 
-        # Sort by fuzzy score descending
-        scored_results.sort(key=lambda x: x.get('_fuzzy_score', 0), reverse=True)
+        # Sort by match tier (ascending), then by fuzzy score (descending)
+        scored_results.sort(key=lambda x: (-x.get('_combined_score', 0)))
 
-        logger.info(f"Fuzzy matching: {len(scored_results)} results above threshold {threshold}")
+        logger.info(f"Intelligent matching: {len(scored_results)} results (Tier 1: {sum(1 for r in scored_results if r.get('_match_tier') == 1)}, Tier 2: {sum(1 for r in scored_results if r.get('_match_tier') == 2)}, Tier 3: {sum(1 for r in scored_results if r.get('_match_tier') == 3)}, Fuzzy: {sum(1 for r in scored_results if r.get('_match_tier') == 4)})")
 
         return scored_results
 

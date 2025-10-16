@@ -617,8 +617,19 @@ async function sayYes() {
       setDebug(data);
     } else {
       setSpeech(data.speech);
-      // Show buttons only if conversation continues
-      const showButtons = data.conversationId && !data.speech.includes('requested') && !data.speech.includes('already');
+      // Show buttons if there's an active conversation and it's asking a question
+      const isQuestion = data.speech.includes('Is that the one') ||
+                         data.speech.includes('you want') ||
+                         data.speech.includes('thinking of a different') ||
+                         data.speech.includes('Would you like') ||
+                         data.speech.includes('you looking for') ||
+                         data.speech.includes('Did you mean');
+      const isFinalMessage = data.speech.includes('requested') ||
+                             data.speech.includes('already been') ||
+                             data.speech.includes('done') ||
+                             data.speech.includes('available soon') ||
+                             data.speech.includes('ready to watch');
+      const showButtons = data.conversationId && isQuestion && !isFinalMessage;
       addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       // Reset conversation after successful request
@@ -660,8 +671,21 @@ async function sayNo() {
       setDebug(data);
     } else {
       setSpeech(data.speech);
-      // Show buttons unless it's a final message
-      const showButtons = data.conversationId && !data.speech.includes('That\'s all') && !data.speech.includes('Perfect!');
+      // Show buttons if there's an active conversation and it's asking a question
+      const isQuestion = data.speech.includes('Is that the one') ||
+                         data.speech.includes('you want') ||
+                         data.speech.includes('thinking of a different') ||
+                         data.speech.includes('Would you like') ||
+                         data.speech.includes('you looking for') ||
+                         data.speech.includes('Did you mean');
+      const isFinalMessage = data.speech.includes('That\'s all') ||
+                             data.speech.includes('Perfect!') ||
+                             data.speech.includes('requested') ||
+                             data.speech.includes('already been') ||
+                             data.speech.includes('done') ||
+                             data.speech.includes('available soon') ||
+                             data.speech.includes('ready to watch');
+      const showButtons = data.conversationId && isQuestion && !isFinalMessage;
       addMessageToConversation(data.speech, false, showButtons);
       setDebug(data);
       updateResultCounter(data.index, data.total);

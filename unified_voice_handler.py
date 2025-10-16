@@ -75,23 +75,21 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found") -> str:
     else:
         speech = f"{prefix} the {type_word} {title}"
 
-    # Add availability status
+    # Add availability status and appropriate question
     if item.get('_isAvailable'):
-        speech += ". This is already in your library"
+        speech += ". This is already in your library. Were you thinking of a different one?"
+        # Note: If they say "No" = correct one, "Yes" = show next
     elif item.get('_isPartiallyAvailable'):
-        speech += ". This is partially in your library"
+        speech += ". This is partially in your library. Is that the one you want?"
     elif item.get('_isProcessing'):
-        speech += ". This is currently being downloaded"
+        speech += ". This is currently being downloaded. Is that the one you want?"
     elif item.get('_isPending'):
-        speech += ". This has already been requested and is pending approval"
+        speech += ". This has already been requested and is pending approval. Is that the one you want?"
     elif is_unreleased:
         # Not released yet and not in library
-        speech += ". That hasn't been released yet"
-
-    # Add confirmation question
-    if is_unreleased and not item.get('_isAvailable') and not item.get('_isPending'):
-        speech += ". Would you like to request it anyway?"
+        speech += ". That hasn't been released yet. Would you like to request it anyway?"
     else:
+        # Standard case - not available, not pending, ready to request
         speech += ". Is that the one you want?"
 
     return speech
@@ -387,6 +385,22 @@ class UnifiedVoiceHandler:
             speech = f"I couldn't find any matches for '{media_title}'. Try rephrasing or being more specific."
             return VoiceResponse(speech=speech, should_end_session=True)
 
+        # Check if we have mixed media types and user didn't specify
+        if not media_type and len(ranked) > 1:
+            media_types_in_results = set()
+            for result in ranked:
+                mtype = result.get('_mediaType')
+                if mtype:
+                    media_types_in_results.add(mtype)
+
+            # If we have both movies and TV shows
+            if len(media_types_in_results) > 1 and 'movie' in media_types_in_results and 'tv' in media_types_in_results:
+                # Ask for clarification
+                # TODO: This needs a custom intent handler for voice assistants to capture "movie" or "TV show" response
+                # For now, just present the first result and user can say No to cycle through
+                logger.info(f"Mixed media types found for '{media_title}': {media_types_in_results}")
+                # Fall through to present first result
+
         # Save state
         state = {
             'query': media_title,
@@ -560,8 +574,21 @@ class UnifiedVoiceHandler:
             speech = "Okay. Try searching again with a different title."
             return VoiceResponse(speech=speech, should_end_session=True)
 
-        idx = state.get('index', 0) + 1
+        # Check if current item is already in library (inverted logic)
+        # If it's in library and they say "No", that means it's the right one
+        idx = state.get('index', 0)
         results = state.get('results', [])
+
+        if idx < len(results):
+            current_item = results[idx]
+            if current_item.get('_isAvailable'):
+                # They said "No" to "Were you thinking of a different one?"
+                # This means they WERE thinking of this one, so we're done
+                title = current_item.get('_title', 'that title')
+                speech = f"Perfect! {title} is ready to watch in your library. Enjoy!"
+                return VoiceResponse(speech=speech, should_end_session=True)
+
+        idx = idx + 1
 
         if idx >= len(results):
             speech = "That's all I could find. Would you like to search for something else?"

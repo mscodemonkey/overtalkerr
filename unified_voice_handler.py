@@ -113,9 +113,9 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
         speech = f"{prefix} the {type_word} {title}"
 
     # Add availability status and appropriate question
+    # CONSISTENT LOGIC: Yes = "that's the one", No = "show me next"
     if item.get('_isAvailable'):
-        speech += ". This is already in your library. Were you thinking of a different one?"
-        # Note: If they say "No" = correct one, "Yes" = show next
+        speech += ". This is already in your library, so you can watch it now. Is that the one you were thinking of?"
     elif item.get('_isPartiallyAvailable'):
         speech += ". This is partially in your library. Is that the one you want?"
     elif item.get('_isProcessing'):
@@ -516,7 +516,6 @@ class UnifiedVoiceHandler:
             'results': ranked,
             'index': 0,
             'user_term': user_term,  # Store user's preferred terminology
-            'inverted_yes_no': first.get('_isAvailable', False),  # Track if using inverted logic
         }
         save_state(request.user_id, request.session_id, state)
 
@@ -560,14 +559,16 @@ class UnifiedVoiceHandler:
                 state['media_type'] = clarification_type
                 save_state(request.user_id, request.session_id, state)
 
+                # Debug logging: show filtered results in order
+                query = state.get('query', 'unknown')
+                logger.info(f"Filtered results for '{query}' ({clarification_type} only, total: {len(filtered_results)}):")
+                for i, result in enumerate(filtered_results[:10]):  # Show first 10
+                    logger.info(f"  [{i}] {result.get('_title', 'unknown')} ({result.get('_releaseDate', 'no date')}) - Score: {result.get('_combined_score', 0)}, Tier: {result.get('_match_tier', 'N/A')}, Available: {result.get('_isAvailable', False)}")
+
                 # Present the first result of that type
                 first = filtered_results[0]
                 user_term = state.get('user_term')
                 speech = build_speech_for_item(first, "I found", user_term=user_term)
-
-                # Set flag for inverted logic if item is already available
-                state['inverted_yes_no'] = first.get('_isAvailable', False)
-                save_state(request.user_id, request.session_id, state)
 
                 return VoiceResponse(
                     speech=speech,
@@ -590,8 +591,6 @@ class UnifiedVoiceHandler:
             user_term = state.get('user_term')
             if results:
                 first = results[0]
-                state['inverted_yes_no'] = first.get('_isAvailable', False)
-                save_state(request.user_id, request.session_id, state)
                 speech = build_speech_for_item(first, "I found", user_term=user_term)
                 return VoiceResponse(
                     speech=speech,
@@ -614,8 +613,6 @@ class UnifiedVoiceHandler:
             user_term = state.get('user_term')
             if results:
                 first = results[0]
-                state['inverted_yes_no'] = first.get('_isAvailable', False)
-                save_state(request.user_id, request.session_id, state)
                 speech = build_speech_for_item(first, "I found", user_term=user_term)
                 return VoiceResponse(
                     speech=speech,
@@ -644,38 +641,11 @@ class UnifiedVoiceHandler:
             speech = "I got a result but can't request it at the moment. Try searching for a different title."
             return VoiceResponse(speech=speech, should_end_session=True)
 
-        # Check if we asked an inverted question (for items already in library)
-        # If yes, then "Yes" means "show me a different one", not "request this one"
-        if state.get('inverted_yes_no'):
-            # They said "Yes" to "Were you thinking of a different one?"
-            # This means YES, show me a different one - so move to next result
-            # Skip to the next item that's NOT already in library
-            logger.info(f"Inverted Yes logic: current idx={idx}, current item={chosen.get('_title', 'unknown')} ({chosen.get('_releaseDate', 'no date')}), isAvailable={chosen.get('_isAvailable')}")
-
-            idx = idx + 1
-            while idx < len(results) and results[idx].get('_isAvailable'):
-                logger.info(f"Skipping idx={idx}: {results[idx].get('_title', 'unknown')} ({results[idx].get('_releaseDate', 'no date')}) - already in library")
-                idx = idx + 1
-
-            state['index'] = idx
-            state['inverted_yes_no'] = results[idx].get('_isAvailable', False) if idx < len(results) else False
-            save_state(request.user_id, request.session_id, state)
-
-            if idx >= len(results):
-                speech = "That's all the results I have, and they're all already in your library. Try starting a new search."
-                return VoiceResponse(speech=speech, should_end_session=True)
-
-            # Present next result
-            next_item = results[idx]
-            user_term = state.get('user_term')
-            logger.info(f"Presenting next item: idx={idx}, title={next_item.get('_title', 'unknown')} ({next_item.get('_releaseDate', 'no date')}), isAvailable={next_item.get('_isAvailable')}")
-            speech = build_speech_for_next(next_item, user_term=user_term, attempt=idx)
-            return VoiceResponse(speech=speech)
-
-        # Normal case: "Yes" means "request this one"
-        # Check if media is already available (shouldn't happen with inverted logic above, but just in case)
+        # CONSISTENT LOGIC: "Yes" always means "that's the one I want"
+        # Check if media is already available
         if chosen.get('_isAvailable'):
-            speech = f"{title} is already in your library! You can watch it now."
+            media_type_word = "movie" if media_type == "movie" else "show"
+            speech = f"In that case, enjoy the {media_type_word}!"
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Check if media is being processed
@@ -774,8 +744,6 @@ class UnifiedVoiceHandler:
                 # Present first result
                 first = filtered_results[0]
                 user_term = state.get('user_term')
-                state['inverted_yes_no'] = first.get('_isAvailable', False)
-                save_state(request.user_id, request.session_id, state)
                 item_speech = build_speech_for_item(first, "", user_term=user_term)  # Empty prefix since we already said "OK, I have..."
                 speech += item_speech
 
@@ -799,19 +767,9 @@ class UnifiedVoiceHandler:
             speech = f"{get_varied_ok()}. Try searching again with a different title."
             return VoiceResponse(speech=speech, should_end_session=True)
 
-        # Check if current item is already in library (inverted logic)
-        # If it's in library and they say "No", that means it's the right one
+        # CONSISTENT LOGIC: "No" always means "show me the next one"
         idx = state.get('index', 0)
         results = state.get('results', [])
-
-        if idx < len(results):
-            current_item = results[idx]
-            if current_item.get('_isAvailable'):
-                # They said "No" to "Were you thinking of a different one?"
-                # This means they WERE thinking of this one, so we're done
-                title = current_item.get('_title', 'that title')
-                speech = f"Perfect! {title} is ready to watch in your library. Enjoy!"
-                return VoiceResponse(speech=speech, should_end_session=True)
 
         idx = idx + 1
 
@@ -826,7 +784,6 @@ class UnifiedVoiceHandler:
         # Update state
         next_item = results[idx]
         state['index'] = idx
-        state['inverted_yes_no'] = next_item.get('_isAvailable', False)
         save_state(request.user_id, request.session_id, state)
 
         # Build response with varied phrasing based on attempt number

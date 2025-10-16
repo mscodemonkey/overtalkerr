@@ -119,14 +119,17 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
     return speech
 
 
-def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None) -> str:
+def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None, attempt: int = 0) -> str:
     """
-    Generate speech for the next alternative result.
+    Generate speech for the next alternative result with varied phrasing.
 
     Args:
         item: The search result item
         user_term: User's preferred terminology (e.g., "film", "movie", "show")
+        attempt: Which attempt this is (0-based) for varying the phrasing
     """
+    import random
+
     title = item.get('_title') or 'Unknown title'
     mtype = item.get('_mediaType') or 'title'
     year = None
@@ -141,10 +144,28 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None)
     else:
         type_word = 'movie' if mtype == 'movie' else 'TV show'
 
+    # Build the title part with year if available
     if year:
-        return f"What about the {type_word} {title}, released in {year}?"
+        title_part = f"the {type_word} {title}, released in {year}"
     else:
-        return f"What about the {type_word} {title}?"
+        title_part = f"the {type_word} {title}"
+
+    # Varied opening phrases based on attempt number
+    # Use attempt % 6 to cycle through 6 different phrasings
+    phrases = [
+        f"What about {title_part}?",
+        f"How about {title_part}?",
+        f"This one? {title_part.capitalize()}.",
+        f"What about this one? {title_part.capitalize()}.",
+        f"Have I got it right this time? {title_part.capitalize()}.",
+        f"Did I nail it? {title_part.capitalize()}.",
+    ]
+
+    # Use modulo to cycle through, or random if attempt is too high
+    if attempt < len(phrases):
+        return phrases[attempt % len(phrases)]
+    else:
+        return random.choice(phrases)
 
 
 def build_availability_message(item: Dict[str, Any], season_number: Optional[int] = None) -> str:
@@ -330,10 +351,10 @@ class UnifiedVoiceHandler:
         try:
             results = overseerr.search(enhanced_title, media_type)
         except OverseerrConnectionError:
-            speech = "I can't reach the media server right now. Check your connection and try again."
+            speech = "I can't reach your media app right now. Check your connection and try again."
             return VoiceResponse(speech=speech, should_end_session=True)
         except OverseerrAuthError:
-            speech = "There's an authentication problem with the media server. Contact your administrator to fix this."
+            speech = "There's an authentication problem with the media app. Contact your administrator to fix this."
             return VoiceResponse(speech=speech, should_end_session=True)
         except OverseerrError as e:
             log_error("Overseerr search failed", e, user_id=request.user_id, title=enhanced_title)
@@ -612,7 +633,7 @@ class UnifiedVoiceHandler:
         results = state.get('results', [])
 
         if idx >= len(results):
-            speech = "I've run out of alternatives. Please start a new search."
+            speech = "I've run out of alternatives. Try starting a new search."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         chosen = results[idx]
@@ -622,7 +643,7 @@ class UnifiedVoiceHandler:
         title = chosen.get('_title', 'the media')
 
         if not media_id:
-            speech = "I couldn't identify that media. Try searching for a different title."
+            speech = "I got a result but can't request it at the moment. Try searching for a different title."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Check if media is already available
@@ -666,11 +687,11 @@ class UnifiedVoiceHandler:
                     speech = f"You got it! I've requested {title}. {availability_msg}"
 
         except OverseerrConnectionError:
-            speech = "I can't reach the media server right now. Your request wasn't submitted. Check your connection and try again."
+            speech = "I can't reach the media app right now. Your request wasn't submitted. Check your connection and try again."
             return VoiceResponse(speech=speech, should_end_session=True)
         except OverseerrError as e:
             log_error("Failed to create Overseerr request", e, user_id=request.user_id, media_id=media_id)
-            speech = "I couldn't create that request. The server might be busy. Try again in a moment."
+            speech = "I couldn't create that request. The app might be busy or down. Try again in a moment."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         return VoiceResponse(
@@ -764,7 +785,7 @@ class UnifiedVoiceHandler:
         idx = idx + 1
 
         if idx >= len(results):
-            speech = "That's all I could find. Would you like to search for something else?"
+            speech = "That's all I could find. Do you want to search for something else?"
             return VoiceResponse(
                 speech=speech,
                 reprompt="What would you like to download?",
@@ -775,10 +796,10 @@ class UnifiedVoiceHandler:
         state['index'] = idx
         save_state(request.user_id, request.session_id, state)
 
-        # Build response
+        # Build response with varied phrasing based on attempt number
         next_item = results[idx]
         user_term = state.get('user_term')
-        speech = build_speech_for_next(next_item, user_term=user_term)
+        speech = build_speech_for_next(next_item, user_term=user_term, attempt=idx)
 
         return VoiceResponse(
             speech=speech,

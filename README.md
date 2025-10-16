@@ -64,6 +64,24 @@ Overtalkerr supports the three most widely-used media request managers in the se
 
 📚 **[See Enhanced Search Features Guide](docs/enhanced_search.md)** for examples and advanced usage!
 
+---
+
+## 💖 Support the Project
+
+If Overtalkerr makes your self-hosted media setup better, consider supporting development! Your contribution helps fund:
+- 🐛 Bug fixes and ongoing maintenance
+- ✨ New features and platform support
+- 📚 Better documentation and guides
+- ☕ A nice cold beer after a late-night coding session!
+
+**Ko-fi (No Fees!)**
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/mscodemonkey)
+
+Every contribution, no matter how small, is deeply appreciated and motivates continued development! 🙏
+
+---
+
 ### Production Ready
 - Comprehensive error handling and retry logic
 - Structured JSON logging for monitoring

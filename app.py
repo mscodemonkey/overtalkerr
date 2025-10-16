@@ -588,15 +588,22 @@ def save_config():
         if not new_config:
             return jsonify({"error": "No configuration data provided"}), 400
 
-        # Check if API key is masked (all asterisks except last 4 chars)
-        # If so, restore the original value from the .env file
+        # Clean up API key
         if 'MEDIA_BACKEND_API_KEY' in new_config:
             api_key = new_config['MEDIA_BACKEND_API_KEY']
+
+            # Check if API key is masked (all asterisks except last 4 chars)
+            # If so, restore the original value from the .env file
             if api_key and api_key.startswith('*'):
                 # This is a masked value, restore original
                 existing_config = cm.read_config()
                 if 'MEDIA_BACKEND_API_KEY' in existing_config:
                     new_config['MEDIA_BACKEND_API_KEY'] = existing_config['MEDIA_BACKEND_API_KEY']
+
+            # Strip trailing == from API key (Overseerr copy button bug adds base64 padding)
+            elif api_key and api_key.endswith('=='):
+                new_config['MEDIA_BACKEND_API_KEY'] = api_key.rstrip('=')
+                logger.info("Stripped base64 padding from API key (Overseerr copy button workaround)")
 
         # Validate configuration
         is_valid, error_message = cm.validate_config(new_config)

@@ -1,16 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Overtalkerr Configuration</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* Theme variables */
+    :root[data-theme="light"] {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-card: #ffffff;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --border-color: #e5e7eb;
+      --shadow: 0 10px 40px rgba(0,0,0,0.1);
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    :root[data-theme="dark"] {
+      --bg-primary: #0b1120;
+      --bg-secondary: #111827;
+      --bg-card: #1f2937;
+      --text-primary: #f9fafb;
+      --text-secondary: #d1d5db;
+      --text-tertiary: #9ca3af;
+      --border-color: #374151;
+      --shadow: 0 10px 40px rgba(0,0,0,0.4);
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
     /* Skip to content link for keyboard users */
     .skip-link {
       position: absolute;
       top: -40px;
       left: 0;
-      background: #667eea;
+      background: var(--accent);
       color: white;
       padding: 8px 16px;
       text-decoration: none;
@@ -29,39 +65,44 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--bg-primary);
       min-height: 100vh;
       padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
+      transition: background-color 0.3s ease;
     }
 
     .container {
-      background: white;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      box-shadow: var(--shadow);
       max-width: 800px;
       width: 100%;
       padding: 40px;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     h1 {
-      color: #333;
+      color: var(--text-primary);
       margin-bottom: 10px;
       font-size: 28px;
+      font-family: 'Chelsea Market', cursive;
+      font-weight: 400;
     }
 
     .subtitle {
-      color: #4b5563; /* Improved contrast */
+      color: var(--text-secondary);
       margin-bottom: 30px;
       font-size: 14px;
     }
 
     .nav-link {
       display: inline-block;
-      color: #667eea;
+      color: var(--accent);
       text-decoration: none;
       font-size: 14px;
       margin-bottom: 20px;
@@ -70,7 +111,7 @@
     }
 
     .nav-link:hover {
-      color: #764ba2;
+      color: var(--accent-hover);
     }
 
     .alert {
@@ -382,6 +423,16 @@
         </div>
 
         <div class="form-group">
+          <label for="uiTheme">UI Theme</label>
+          <select id="uiTheme" name="UI_THEME" aria-label="Select user interface theme">
+            <option value="auto">Auto (Follow System)</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+          <span class="help-text">Choose your preferred color scheme. Auto follows your system settings.</span>
+        </div>
+
+        <div class="form-group">
           <label id="mock-mode-label">Mock Mode (Testing)</label>
           <div class="toggle-container">
             <div id="mockToggle" class="toggle" onclick="toggleMock()" role="switch" aria-checked="false" aria-labelledby="mock-mode-label" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleMock();}"></div>
@@ -476,6 +527,7 @@
         document.getElementById('sessionTtl').value = config.SESSION_TTL_HOURS || '24';
         document.getElementById('logLevel').value = config.LOG_LEVEL || 'INFO';
         document.getElementById('logFormat').value = config.LOG_FORMAT || 'json';
+        document.getElementById('uiTheme').value = config.UI_THEME || 'auto';
 
         // Mock mode toggle
         const mockEnabled = config.MOCK_BACKEND === 'true';
@@ -653,6 +705,15 @@
       status.textContent = message;
       status.style.display = 'block';
     }
+
+    // Listen for theme changes in the select box and apply immediately
+    document.getElementById('uiTheme').addEventListener('change', (e) => {
+      if (window.themeManager) {
+        window.themeManager.setTheme(e.target.value);
+      }
+    });
   </script>
+  <!-- Theme Management -->
+  <script src="/static/theme.js"></script>
 </body>
 </html>

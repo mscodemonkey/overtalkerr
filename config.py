@@ -41,6 +41,9 @@ class Config:
     LOG_LEVEL: str
     LOG_FORMAT: str
 
+    # UI Theme
+    UI_THEME: str  # 'light', 'dark', or 'auto'
+
     @classmethod
     def load(cls) -> None:
         """Load and validate all configuration"""
@@ -70,6 +73,9 @@ class Config:
         # Logging
         cls.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
         cls.LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
+
+        # UI Theme
+        cls.UI_THEME = os.getenv("UI_THEME", "auto").lower()
 
         # Validate configuration
         cls._validate()
@@ -115,6 +121,12 @@ class Config:
         if cls.LOG_LEVEL not in valid_levels:
             logger.warning(f"Invalid LOG_LEVEL '{cls.LOG_LEVEL}', defaulting to INFO")
             cls.LOG_LEVEL = "INFO"
+
+        # Validate theme
+        valid_themes = {"light", "dark", "auto"}
+        if cls.UI_THEME not in valid_themes:
+            logger.warning(f"Invalid UI_THEME '{cls.UI_THEME}', defaulting to auto")
+            cls.UI_THEME = "auto"
 
     @classmethod
     def check_connectivity(cls) -> bool:

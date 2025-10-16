@@ -243,7 +243,10 @@ class UnifiedVoiceHandler:
         ranked = overseerr.pick_best(results, upcoming_only=upcoming_only, year_filter=year_filter)
 
         if not ranked:
-            speech = f"I couldn't find any matches for '{media_title}'. Try rephrasing or being more specific."
+            if year_filter:
+                speech = f"I couldn't find any matches for '{media_title}' from {year_filter}. Try rephrasing or removing the year filter."
+            else:
+                speech = f"I couldn't find any matches for '{media_title}'. Try rephrasing or being more specific."
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Save state

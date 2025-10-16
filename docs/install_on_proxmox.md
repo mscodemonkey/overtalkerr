@@ -63,7 +63,7 @@ You have two options - the web UI (super easy!) or editing the config file direc
 This is the easiest way - just point your browser to:
 
 ```
-http://YOUR-LXC-IP:5000/config/ui
+http://YOUR-LXC-IP:5000/config
 ```
 
 Replace `YOUR-LXC-IP` with your container's IP address (you can find this in the Proxmox web UI or by running `ip addr` in the container).
@@ -144,7 +144,7 @@ If you see `active (running)`, you're golden! 🎉
 
 Your new Overtalkerr instance has these endpoints ready:
 
-- **⚙️ Configuration UI**: `http://YOUR-LXC-IP:5000/config/ui` - **Start here first!**
+- **⚙️ Configuration UI**: `http://YOUR-LXC-IP:5000/config` - **Start here first!**
 - **🧪 Test Interface**: `http://YOUR-LXC-IP:5000/test` - Try voice requests from your browser!
 - **❤️ Health Check**: `http://YOUR-LXC-IP:5000/test/info` - Check if everything is healthy
 - **🔌 API Endpoint**: `http://YOUR-LXC-IP:5000/` - For Alexa/Google/Siri to connect to

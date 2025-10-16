@@ -93,7 +93,8 @@ Overtalkerr supports the three most widely-used media request managers in the se
 ### 1. Clone and Configure
 
 ```bash
-git clone <repository-url> overtalkerr
+# Clone the repository
+git clone https://github.com/mscodemonkey/overtalkerr.git
 cd overtalkerr
 
 # Copy environment template
@@ -154,7 +155,7 @@ python app.py
 
 ### 3. Configure and Test
 
-**Configuration UI** (recommended): Open `http://localhost:5000/config/ui` to:
+**Configuration UI** (recommended): Open `http://localhost:5000/config` to:
 - Configure your media backend (Overseerr/Jellyseerr/Ombi)
 - Test your API connection
 - Adjust application settings
@@ -169,7 +170,7 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 ### 🔵 Amazon Alexa (Recommended)
 
 **Powered by:** ask-sdk-python (modern SDK)
-**Endpoint:** `https://your-domain.com/` (POST)
+**Endpoint:** `https://your-domain.com/alexa` (POST)
 
 **Quick Setup:**
 1. Create skill in [Alexa Developer Console](https://developer.amazon.com/alexa/console/ask)

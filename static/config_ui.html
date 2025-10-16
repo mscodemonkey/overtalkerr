@@ -412,7 +412,7 @@
 
     async function loadConfig() {
       try {
-        const response = await fetch('/config');
+        const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Failed to load configuration');
 
         const config = await response.json();
@@ -505,7 +505,7 @@
         showAlert('💾 Configuration saved! Restarting service...', 'info');
 
         // Then trigger restart
-        const restartResponse = await fetch('/config/restart', {
+        const restartResponse = await fetch('/api/config/restart', {
           method: 'POST'
         });
 
@@ -540,7 +540,7 @@
       btn.innerHTML = '🔌 Testing... <span class="loading"></span>';
 
       try {
-        const response = await fetch('/config/test-backend', {
+        const response = await fetch('/api/config/test-backend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, apiKey })

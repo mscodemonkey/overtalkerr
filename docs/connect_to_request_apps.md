@@ -69,7 +69,7 @@ Now let's tell Overtalkerr where your backend lives!
 
 #### Option 1: Use the Web Configuration UI (Easiest!)
 
-1. Open your browser and go to: `http://your-overtalkerr-server:5000/config/ui`
+1. Open your browser and go to: `http://your-overtalkerr-server:5000/config`
 2. In the **Media Request Backend** section:
    - **Backend URL**: Enter your backend's URL (like `https://requests.yourdomain.com`)
    - **Backend API Key**: Paste the API key you just copied
@@ -335,7 +335,7 @@ Moving from Overseerr to Jellyseerr? Or from Ombi to Overseerr? No problem!
 1. **Get your new backend's API key** (follow the steps above)
 
 2. **Update your configuration:**
-   - Use the config UI at `/config/ui`, OR
+   - Use the config UI at `/config`, OR
    - Edit `.env` and change `MEDIA_BACKEND_URL` and `MEDIA_BACKEND_API_KEY`
 
 3. **Restart Overtalkerr**

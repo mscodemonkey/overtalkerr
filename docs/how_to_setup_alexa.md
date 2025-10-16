@@ -107,13 +107,13 @@ Now we need to tell Alexa where your Overtalkerr server lives.
 2. Select **"HTTPS"** (not AWS Lambda!)
 3. In the **"Default Region"** field, enter your Overtalkerr URL:
    ```
-   https://overtalkerr.yourdomain.com/
+   https://overtalkerr.yourdomain.com/alexa
    ```
    **Important notes:**
    - Use your actual domain (replace `overtalkerr.yourdomain.com`)
    - It must be HTTPS
-   - Include the trailing slash `/` at the end
-   - This is your root URL, NOT `/voice` (that's only for Google and Siri!)
+   - Include `/alexa` at the end (this is the Alexa-specific endpoint)
+   - Google and Siri use `/voice`, but Alexa uses `/alexa`
 
 4. Scroll down to **"SSL certificate type"**
 5. Select one of these based on your setup:

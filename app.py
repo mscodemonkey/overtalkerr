@@ -52,10 +52,95 @@ if not Config.MOCK_OVERSEERR:
 # Import Alexa handlers from dedicated module
 from alexa_handlers import skill as alexa_skill
 
-@app.route('/', methods=['POST'])
+# ========================================
+# DASHBOARD / LANDING PAGE
+# ========================================
+
+@app.route('/')
+def dashboard():
+    """Serve the main dashboard"""
+    return send_from_directory('static', 'dashboard.html')
+
+
+@app.route('/api/stats')
+def get_stats():
+    """Get dashboard statistics"""
+    try:
+        from db import SessionState, db_session
+        from datetime import datetime, timedelta
+
+        stats = {}
+
+        # Backend status
+        try:
+            backend = get_backend()
+            stats['backend_connected'] = True
+            stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
+        except:
+            stats['backend_connected'] = False
+            stats['backend_type'] = 'Unknown'
+
+        # Database stats
+        with db_session() as session:
+            # Total requests (approximate by unique media titles in session state)
+            total_count = session.query(SessionState).count()
+            stats['total_requests'] = total_count
+
+            # Recent activity (last 10)
+            recent = session.query(SessionState).order_by(
+                SessionState.updated_at.desc()
+            ).limit(10).all()
+
+            stats['recent_activity'] = []
+            for s in recent:
+                if s.session_data and 'chosen_result' in s.session_data:
+                    result = s.session_data['chosen_result']
+                    stats['recent_activity'].append({
+                        'title': result.get('title', 'Unknown'),
+                        'year': result.get('year'),
+                        'media_type': result.get('mediaType', 'unknown'),
+                        'timestamp': s.updated_at.isoformat() if s.updated_at else None
+                    })
+
+            # Today's requests
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_count = session.query(SessionState).filter(
+                SessionState.updated_at >= today
+            ).count()
+            stats['requests_today'] = today_count
+
+            # This week's requests
+            week_ago = datetime.now() - timedelta(days=7)
+            week_count = session.query(SessionState).filter(
+                SessionState.updated_at >= week_ago
+            ).count()
+            stats['requests_this_week'] = week_count
+
+        # Configuration status
+        stats['config_complete'] = bool(
+            Config.MEDIA_BACKEND_URL and
+            Config.MEDIA_BACKEND_API_KEY and
+            Config.PUBLIC_BASE_URL
+        )
+
+        stats['public_url'] = Config.PUBLIC_BASE_URL or 'Not configured'
+        stats['backend_url'] = Config.MEDIA_BACKEND_URL or 'Not configured'
+
+        return jsonify(stats)
+
+    except Exception as e:
+        log_error("Failed to get stats", e)
+        return jsonify({"error": str(e)}), 500
+
+
+# ========================================
+# ALEXA ENDPOINT
+# ========================================
+
+@app.route('/alexa', methods=['POST'])
 def alexa_webhook():
     """
-    Main endpoint for Alexa requests using ask-sdk-python.
+    Alexa skill endpoint for handling voice requests.
 
     This endpoint handles all Alexa skill requests with proper verification.
     """
@@ -444,13 +529,13 @@ def cleanup_endpoint():
 # CONFIGURATION MANAGEMENT ENDPOINTS
 # ========================================
 
-@app.route('/config/ui')
+@app.route('/config')
 def config_ui():
     """Serve the configuration management UI"""
     return send_from_directory('static', 'config_ui.html')
 
 
-@app.route('/config', methods=['GET'])
+@app.route('/api/config', methods=['GET'])
 def get_config():
     """Get current configuration (without sensitive values in production)"""
     try:
@@ -473,7 +558,7 @@ def get_config():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/config', methods=['POST'])
+@app.route('/api/config', methods=['POST'])
 def save_config():
     """Save configuration to .env file"""
     try:
@@ -504,7 +589,7 @@ def save_config():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/config/test-backend', methods=['POST'])
+@app.route('/api/config/test-backend', methods=['POST'])
 def test_backend_connection():
     """Test connection to media backend"""
     try:
@@ -526,7 +611,7 @@ def test_backend_connection():
         }), 500
 
 
-@app.route('/config/restart', methods=['POST'])
+@app.route('/api/config/restart', methods=['POST'])
 def restart_service():
     """Restart the Overtalkerr service"""
     try:

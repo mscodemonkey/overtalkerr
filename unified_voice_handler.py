@@ -92,6 +92,49 @@ def build_speech_for_next(item: Dict[str, Any]) -> str:
         return f"What about the {type_word} {title}?"
 
 
+def build_availability_message(item: Dict[str, Any], season_number: Optional[int] = None) -> str:
+    """Build message about when content will be available based on release date"""
+    from datetime import datetime
+
+    release_date_str = item.get('_releaseDate')
+
+    if not release_date_str:
+        # No release date - use generic message
+        return "It should be available soon."
+
+    try:
+        # Parse the release date
+        release_date = datetime.fromisoformat(release_date_str.replace('Z', '+00:00'))
+        now = datetime.now(release_date.tzinfo) if release_date.tzinfo else datetime.now()
+
+        # Check if already released
+        if release_date <= now:
+            return "It should be available soon."
+
+        # Not released yet - format the date for speech
+        # Format: "October 20th" or "October 20th, 2026" (include year if not current year)
+        day = release_date.day
+        month = release_date.strftime('%B')  # Full month name
+        year = release_date.year
+        current_year = now.year
+
+        # Add ordinal suffix (st, nd, rd, th)
+        if 10 <= day % 100 <= 20:
+            suffix = 'th'
+        else:
+            suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
+
+        date_spoken = f"{month} {day}{suffix}"
+        if year != current_year:
+            date_spoken += f", {year}"
+
+        return f"It'll be downloaded once it's released, which we're expecting to be on {date_spoken}."
+
+    except (ValueError, AttributeError):
+        # Error parsing date - use generic message
+        return "It should be available soon."
+
+
 def save_state(user_id: str, conversation_id: str, state: Dict[str, Any]):
     """Save conversation state to database"""
     with db_session() as s:
@@ -334,10 +377,13 @@ class UnifiedVoiceHandler:
             if result.get('message') and 'already requested' in result.get('message', '').lower():
                 speech = "That media has already been requested!"
             else:
+                # Build availability message based on release date
+                availability_msg = build_availability_message(chosen, season_number)
+
                 if season_number:
-                    speech = f"Okay! I've requested season {season_number} of {title}. It should be available soon."
+                    speech = f"Okay! I've requested season {season_number} of {title}. {availability_msg}"
                 else:
-                    speech = f"Okay! I've requested {title}. It should be available soon."
+                    speech = f"Okay! I've requested {title}. {availability_msg}"
 
         except OverseerrConnectionError:
             speech = "Sorry, I couldn't connect to the media server. Your request wasn't submitted."

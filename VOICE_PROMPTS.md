@@ -143,16 +143,28 @@ Sorry, I couldn't determine the media ID. Please try a different title.
 ```
 *(Note: This message is informational; the request continues)*
 
-### Request Successful - Movie
-**When:** Request submitted successfully for a movie
+### Request Successful - Movie (Already Released)
+**When:** Request submitted successfully for a movie that's already released
 ```
 Okay! I've requested [title]. It should be available soon.
 ```
 
-### Request Successful - TV Show with Season
-**When:** Request submitted successfully for a specific TV season
+### Request Successful - Movie (Not Yet Released)
+**When:** Request submitted successfully for a movie that hasn't been released yet
+```
+Okay! I've requested [title]. It'll be downloaded once it's released, which we're expecting to be on [October 20th] (or [October 20th, 2026] if different year).
+```
+
+### Request Successful - TV Show with Season (Already Released)
+**When:** Request submitted successfully for a specific TV season that's already released
 ```
 Okay! I've requested season [number] of [title]. It should be available soon.
+```
+
+### Request Successful - TV Show with Season (Not Yet Released)
+**When:** Request submitted successfully for a specific TV season that hasn't been released yet
+```
+Okay! I've requested season [number] of [title]. It'll be downloaded once it's released, which we're expecting to be on [October 20th] (or [October 20th, 2026] if different year).
 ```
 
 ### Already Requested (Backend Duplicate Detection)

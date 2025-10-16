@@ -56,22 +56,40 @@ OS_TYPE="debian"
 OS_VERSION="12"
 
 # Auto-detect available storage for containers
-# Try common storage options in order of preference
+# Check which storage supports 'rootdir' content type (for LXC containers)
 STORAGE=""
-for storage in "local-lxc" "local" "local-zfs" "local-btrfs"; do
-    if pvesm status | grep -q "^${storage} "; then
-        # Check if this storage supports container content
-        if pvesm status | grep "^${storage} " | grep -q "rootdir\|images"; then
-            STORAGE="$storage"
-            break
-        fi
+while IFS= read -r line; do
+    storage_name=$(echo "$line" | awk '{print $1}')
+    # Check if this storage supports rootdir content type
+    if pvesm status -content rootdir 2>/dev/null | grep -q "^${storage_name} "; then
+        STORAGE="$storage_name"
+        msg_info "Detected storage: $STORAGE (supports rootdir)"
+        break
     fi
-done
+done < <(pvesm status | tail -n +2)
+
+# If no rootdir storage found, try lvmthin or dir storage (common for containers)
+if [ -z "$STORAGE" ]; then
+    msg_warn "No rootdir storage found, trying common container storage types..."
+    for storage in "local-lvm" "local" "local-zfs" "local-btrfs"; do
+        if pvesm status | grep -q "^${storage} "; then
+            storage_type=$(pvesm status | grep "^${storage} " | awk '{print $2}')
+            if [[ "$storage_type" == "lvmthin" ]] || [[ "$storage_type" == "dir" ]] || [[ "$storage_type" == "zfspool" ]] || [[ "$storage_type" == "btrfs" ]]; then
+                STORAGE="$storage"
+                msg_info "Using storage: $STORAGE (type: $storage_type)"
+                break
+            fi
+        fi
+    done
+fi
 
 if [ -z "$STORAGE" ]; then
     msg_error "No suitable storage found for containers"
     msg_info "Available storage:"
     pvesm status
+    msg_info ""
+    msg_info "LXC containers need storage with 'rootdir' content type,"
+    msg_info "or storage of type: lvmthin, dir, zfspool, or btrfs"
     exit 1
 fi
 

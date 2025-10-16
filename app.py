@@ -600,10 +600,14 @@ def save_config():
                 if 'MEDIA_BACKEND_API_KEY' in existing_config:
                     new_config['MEDIA_BACKEND_API_KEY'] = existing_config['MEDIA_BACKEND_API_KEY']
 
-            # Strip trailing == from API key (Overseerr copy button bug adds base64 padding)
-            elif api_key and api_key.endswith('=='):
-                new_config['MEDIA_BACKEND_API_KEY'] = api_key.rstrip('=')
-                logger.info("Stripped base64 padding from API key (Overseerr copy button workaround)")
+            # Add base64 padding to API key if missing (Overseerr API requires it, but UI doesn't show it)
+            elif api_key and not api_key.endswith('='):
+                # Check if it looks like a base64 string that needs padding
+                if len(api_key) % 4 != 0:
+                    # Add padding to make it a multiple of 4
+                    padding = '=' * (4 - (len(api_key) % 4))
+                    new_config['MEDIA_BACKEND_API_KEY'] = api_key + padding
+                    logger.info(f"Added base64 padding to API key (Overseerr API requirement)")
 
         # Validate configuration
         is_valid, error_message = cm.validate_config(new_config)

@@ -73,12 +73,26 @@ def get_stats():
 
         # Backend status
         try:
-            backend = get_backend()
-            stats['backend_connected'] = True
-            stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
-        except:
+            # Check if backend is configured
+            if not Config.MEDIA_BACKEND_URL or Config.MEDIA_BACKEND_URL == 'http://your-backend-url:5055':
+                stats['backend_connected'] = False
+                stats['backend_type'] = 'Not Configured'
+                stats['backend_configured'] = False
+            else:
+                backend = get_backend()
+                # Try to actually connect
+                if Config.check_connectivity():
+                    stats['backend_connected'] = True
+                    stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
+                    stats['backend_configured'] = True
+                else:
+                    stats['backend_connected'] = False
+                    stats['backend_type'] = backend.__class__.__name__.replace('Backend', '')
+                    stats['backend_configured'] = True
+        except Exception as e:
             stats['backend_connected'] = False
-            stats['backend_type'] = 'Unknown'
+            stats['backend_type'] = 'Error'
+            stats['backend_configured'] = False
 
         # Database stats
         with db_session() as session:

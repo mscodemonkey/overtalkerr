@@ -391,7 +391,9 @@
 
         // Backend status
         const backendStatus = document.getElementById('backend-status');
-        if (stats.backend_connected) {
+        if (stats.backend_configured === false) {
+          backendStatus.innerHTML = '<div class="status warning"><span class="status-dot"></span>Not Configured</div>';
+        } else if (stats.backend_connected) {
           backendStatus.innerHTML = '<div class="status connected"><span class="status-dot"></span>Connected</div>';
         } else {
           backendStatus.innerHTML = '<div class="status disconnected"><span class="status-dot"></span>Disconnected</div>';
@@ -401,10 +403,12 @@
 
         // Configuration status
         const configStatus = document.getElementById('config-status');
-        if (stats.config_complete) {
+        if (stats.backend_configured === false) {
+          configStatus.innerHTML = '<div class="status warning"><span class="status-dot"></span>Setup Required</div>';
+        } else if (stats.backend_connected) {
           configStatus.innerHTML = '<div class="status connected"><span class="status-dot"></span>Complete</div>';
         } else {
-          configStatus.innerHTML = '<div class="status warning"><span class="status-dot"></span>Incomplete</div>';
+          configStatus.innerHTML = '<div class="status warning"><span class="status-dot"></span>Check Connection</div>';
         }
 
         // Stats

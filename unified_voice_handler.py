@@ -642,7 +642,8 @@ class UnifiedVoiceHandler:
 
             # Present next result
             next_item = results[idx]
-            speech = present_result(next_item, idx, len(results))
+            user_term = state.get('user_term')
+            speech = build_speech_for_next(next_item, user_term=user_term, attempt=idx)
             return VoiceResponse(speech=speech)
 
         # Check if media is being processed

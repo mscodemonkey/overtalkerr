@@ -97,10 +97,10 @@ Choose your installation method:
 Perfect for homelab users! One-command LXC container installation:
 
 ```bash
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr-standalone.sh)"
 ```
 
-This creates a lightweight LXC container with everything pre-configured (Python, dependencies, systemd service, and more!). After installation, just configure your backend settings via the web UI at `http://YOUR-LXC-IP:5000/config`.
+This creates a lightweight LXC container with everything pre-configured (Python, dependencies, systemd service, and more!). The script will prompt you for a container ID and then automatically install everything. After installation, just configure your backend settings via the web UI at `http://YOUR-LXC-IP:5000/config`.
 
 See **[install_on_proxmox.md](docs/install_on_proxmox.md)** for full details.
 

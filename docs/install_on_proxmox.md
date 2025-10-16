@@ -8,13 +8,19 @@ We've created an LXC helper script that sets everything up for you automatically
 
 ## The One-Command Install
 
-Ready? Open your **Proxmox VE Shell** and run this:
+Ready? Open your **Proxmox VE Shell** (SSH into your Proxmox host or use the web console) and run this:
 
 ```bash
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr.sh)"
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/ct/overtalkerr-standalone.sh)"
 ```
 
-That's it! The script will ask you a few questions and then create a complete, working Overtalkerr installation. ✨
+The script will:
+1. Ask you for a container ID (it suggests the next available one)
+2. Show you the configuration
+3. Ask you to confirm
+4. Then automatically create and configure everything!
+
+It takes about 2-3 minutes, and you'll see colorized progress messages for each step. ✨
 
 ---
 

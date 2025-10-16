@@ -4,6 +4,8 @@ Unified voice request handler that works across all platforms.
 This module contains platform-agnostic business logic for handling voice requests.
 """
 import re
+import json
+import datetime
 from typing import Optional, Dict, Any, List
 
 from voice_assistant_adapter import VoiceRequest, VoiceResponse, VoiceAssistantPlatform
@@ -12,7 +14,18 @@ import overseerr
 from overseerr import OverseerrError, OverseerrConnectionError, OverseerrAuthError
 from db import db_session, SessionState
 from enhanced_search import search_enhancer
-import json
+
+
+# ==========================================
+# JSON Encoder for Date Objects
+# ==========================================
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles date and datetime objects"""
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 # ==========================================
@@ -90,7 +103,7 @@ def save_state(user_id: str, conversation_id: str, state: Dict[str, Any]):
             )
             .one_or_none()
         )
-        payload = json.dumps(state)
+        payload = json.dumps(state, cls=DateTimeEncoder)
         if existing:
             existing.state_json = payload
         else:

@@ -224,16 +224,8 @@ pct exec "$CTID" -- bash -c "
 }
 msg_ok "Dependencies installed"
 
-# Create Python virtual environment
-msg_info "Setting up Python virtual environment..."
-pct exec "$CTID" -- bash -c "python3 -m venv /opt/overtalkerr/venv" || {
-    msg_error "Failed to create virtual environment"
-    exit 1
-}
-msg_ok "Virtual environment created"
-
-# Clone repository and install
-msg_info "Installing Overtalkerr..."
+# Clone repository
+msg_info "Cloning Overtalkerr repository..."
 pct exec "$CTID" -- bash -c "
     cd /opt
 
@@ -242,16 +234,33 @@ pct exec "$CTID" -- bash -c "
         rm -rf overtalkerr
     fi
 
-    git clone https://github.com/mscodemonkey/overtalkerr.git && \
-    cd overtalkerr && \
+    git clone https://github.com/mscodemonkey/overtalkerr.git
+" || {
+    msg_error "Failed to clone repository"
+    exit 1
+}
+msg_ok "Repository cloned"
+
+# Create Python virtual environment
+msg_info "Setting up Python virtual environment..."
+pct exec "$CTID" -- bash -c "python3 -m venv /opt/overtalkerr/venv" || {
+    msg_error "Failed to create virtual environment"
+    exit 1
+}
+msg_ok "Virtual environment created"
+
+# Install Python dependencies
+msg_info "Installing Python dependencies (this may take a minute)..."
+pct exec "$CTID" -- bash -c "
+    cd /opt/overtalkerr && \
     /opt/overtalkerr/venv/bin/pip install --upgrade pip && \
     /opt/overtalkerr/venv/bin/pip install -r requirements.txt && \
     /opt/overtalkerr/venv/bin/pip install gunicorn
 " || {
-    msg_error "Failed to install Overtalkerr"
+    msg_error "Failed to install Python dependencies"
     exit 1
 }
-msg_ok "Overtalkerr installed"
+msg_ok "Python dependencies installed"
 
 # Create environment configuration
 msg_info "Creating environment configuration..."

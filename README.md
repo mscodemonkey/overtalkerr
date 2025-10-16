@@ -37,6 +37,8 @@ The backend automatically detects your media request service (Overseerr, Jellyse
 
 > **💡 Using Radarr/Sonarr?** These tools are excellent for managing downloads, but they lack the unified search experience that makes voice requests intuitive. We recommend pairing them with one of the supported backends above - they're specifically designed to provide a better search and request interface while still managing your Radarr/Sonarr instances behind the scenes. This gives you the best of both worlds: powerful automation *and* user-friendly requests!
 
+Overtalkerr supports the three most widely-used media request managers in the self-hosting community. If you're using a different request platform, we'd love to hear about it! [Open an issue on GitHub](https://github.com/mscodemonkey/overtalkerr/issues) to discuss potential support.
+
 📚 **[See Backend Configuration Guide](BACKENDS.md)** for setup details and compatibility notes.
 
 ### Capabilities

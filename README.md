@@ -200,11 +200,17 @@ Overtalkerr includes **one-click auto-update** right from the dashboard! No need
 
 1. Open the Overtalkerr dashboard (http://your-server:5000)
 2. If an update is available, you'll see a notification banner at the top
-3. Click **"Install Update"** to automatically download the latest version
-4. Restart the service: `systemctl restart overtalkerr`
-5. Refresh the dashboard - done!
+3. Click **"Install Update"** to automatically download and install the latest version
+4. The service will restart automatically - done!
 
 The auto-update feature works for git-based installations (Proxmox LXC, Manual Install). See [docs/auto_update.md](docs/auto_update.md) for details.
+
+> **⚠️ Existing Installations**: If the auto-update button shows "Git command failed", your systemd service needs a quick fix. Run this on your server:
+> ```bash
+> cd /opt/overtalkerr
+> curl -fsSL https://raw.githubusercontent.com/mscodemonkey/overtalkerr/main/fix-systemd-path.sh | bash
+> ```
+> This adds git and systemctl to the service PATH. New installations include this fix automatically.
 
 ### Automatic Update Detection
 

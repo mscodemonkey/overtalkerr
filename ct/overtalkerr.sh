@@ -147,7 +147,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/overtalkerr
-Environment="PATH=/opt/overtalkerr/venv/bin"
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/overtalkerr/venv/bin"
 ExecStart=/opt/overtalkerr/venv/bin/gunicorn \\
     --bind 0.0.0.0:5000 \\
     --workers 2 \\

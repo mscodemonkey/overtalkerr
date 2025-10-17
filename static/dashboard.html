@@ -687,7 +687,9 @@
         const recentList = document.getElementById('recent-activity');
         if (stats.recent_activity && stats.recent_activity.length > 0) {
           recentList.innerHTML = stats.recent_activity.map(item => {
-            const timeAgo = item.timestamp ? getTimeAgo(new Date(item.timestamp)) : 'Unknown';
+            // Parse UTC timestamp correctly - add 'Z' to indicate UTC if not present
+            const timestamp = item.timestamp ? (item.timestamp.endsWith('Z') ? item.timestamp : item.timestamp + 'Z') : null;
+            const timeAgo = timestamp ? getTimeAgo(new Date(timestamp)) : 'Unknown';
             const icon = item.media_type === 'movie' ? '🎬' : '📺';
             return `
               <li class="recent-item">

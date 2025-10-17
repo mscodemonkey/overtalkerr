@@ -252,9 +252,10 @@ def alexa_webhook():
         response_envelope = alexa_skill.invoke(request_envelope=request_envelope, context=None)
 
         # Serialize the ResponseEnvelope back to JSON dict
+        # Note: serialize() returns a dict, not a string
         response_dict = alexa_serializer.serialize(response_envelope)
 
-        return jsonify(json.loads(response_dict))
+        return jsonify(response_dict)
 
     except Exception as e:
         log_error("Error processing Alexa request", e)

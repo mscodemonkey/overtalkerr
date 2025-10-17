@@ -407,7 +407,7 @@
       <div class="logo-container">
         <!-- Overtalkerr Logo SVG -->
         <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Overtalkerr logo with microphone and sound waves">
-          <!-- Outer circle with gradient -->
+          <!-- Gradients that work on both light and dark backgrounds -->
           <defs>
             <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
@@ -423,24 +423,24 @@
             </filter>
           </defs>
 
-          <!-- Background circle -->
-          <circle cx="50" cy="50" r="48" fill="white" opacity="0.2"/>
+          <!-- Background circle with gradient fill -->
+          <circle cx="50" cy="50" r="48" fill="url(#logoGradient)" opacity="0.15"/>
 
           <!-- Sound waves (forming a play button shape) -->
-          <path d="M 30 35 Q 25 50 30 65" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
-          <path d="M 20 30 Q 12 50 20 70" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4"/>
+          <path d="M 30 35 Q 25 50 30 65" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+          <path d="M 20 30 Q 12 50 20 70" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
 
-          <path d="M 70 35 Q 75 50 70 65" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
-          <path d="M 80 30 Q 88 50 80 70" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.4"/>
+          <path d="M 70 35 Q 75 50 70 65" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+          <path d="M 80 30 Q 88 50 80 70" stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
 
-          <!-- Microphone in center -->
-          <rect x="45" y="35" width="10" height="20" rx="5" fill="white" filter="url(#glow)"/>
-          <path d="M 42 55 Q 42 62 50 62 Q 58 62 58 55" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" filter="url(#glow)"/>
-          <line x1="50" y1="62" x2="50" y2="68" stroke="white" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
-          <line x1="44" y1="68" x2="56" y2="68" stroke="white" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
+          <!-- Microphone in center with gradient fill -->
+          <rect x="45" y="35" width="10" height="20" rx="5" fill="url(#logoGradient)" filter="url(#glow)"/>
+          <path d="M 42 55 Q 42 62 50 62 Q 58 62 58 55" stroke="url(#logoGradient)" stroke-width="2.5" fill="none" stroke-linecap="round" filter="url(#glow)"/>
+          <line x1="50" y1="62" x2="50" y2="68" stroke="url(#logoGradient)" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
+          <line x1="44" y1="68" x2="56" y2="68" stroke="url(#logoGradient)" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
 
-          <!-- Subtle play triangle overlay -->
-          <path d="M 48 42 L 48 58 L 58 50 Z" fill="white" opacity="0.3"/>
+          <!-- Subtle play triangle overlay with gradient -->
+          <path d="M 48 42 L 48 58 L 58 50 Z" fill="url(#logoGradient)" opacity="0.5"/>
         </svg>
         <div>
           <h1>OVERTALKERR</h1>

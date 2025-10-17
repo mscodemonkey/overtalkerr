@@ -2,6 +2,8 @@
 
 Request movies and TV shows using **Alexa**, **Google Assistant**, or **Siri**! 🎙️
 
+> **💡 Setup Required**: Overtalkerr requires some effort to set up (configuring voice assistants, API keys, and your media backend) - but it's definitely worth it! Once configured, you'll have a powerful hands-free way to request media across all your devices. Follow our step-by-step guides to get started.
+
 > **📖 About the Name**: Overtalkerr started life as a voice companion specifically for Overseerr. As it grew to support Jellyseerr, Ombi, and multiple voice platforms, we outgrew the name - but it stuck! Consider it a nod to our roots while we serve the entire self-hosted media community. 🎬
 
 > **⚠️ BETA SOFTWARE**: Overtalkerr is currently in beta testing. While we've worked hard to make it stable and feature-complete, please use at your own risk and report any issues you encounter on [GitHub Issues](https://github.com/mscodemonkey/overtalkerr/issues). Your feedback helps make it better!

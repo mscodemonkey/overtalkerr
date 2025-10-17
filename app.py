@@ -120,16 +120,45 @@ def get_stats():
                     # Parse the JSON from state_json column
                     import json
                     state_data = json.loads(s.state_json) if s.state_json else {}
-                    if state_data and 'chosen_result' in state_data:
-                        result = state_data['chosen_result']
+
+                    # Try to get the result - could be in 'chosen_result' (old) or 'results' array (new)
+                    result = None
+                    if state_data:
+                        # New format: results array with index
+                        if 'results' in state_data and state_data['results']:
+                            idx = state_data.get('index', 0)
+                            if 0 <= idx < len(state_data['results']):
+                                result = state_data['results'][idx]
+                        # Old format: chosen_result
+                        elif 'chosen_result' in state_data:
+                            result = state_data['chosen_result']
+
+                    if result:
+                        # Extract title (could be '_title', 'title', or 'name')
+                        title = result.get('_title') or result.get('title') or result.get('name', 'Unknown')
+
+                        # Extract year from various possible fields
+                        year = None
+                        if result.get('year'):
+                            year = result['year']
+                        elif result.get('_date'):
+                            try:
+                                year = str(result['_date']).split('-')[0]
+                            except:
+                                pass
+
+                        # Extract media type
+                        media_type = result.get('_mediaType') or result.get('mediaType') or result.get('type', 'unknown')
+
                         stats['recent_activity'].append({
-                            'title': result.get('title', 'Unknown'),
-                            'year': result.get('year'),
-                            'media_type': result.get('mediaType', 'unknown'),
+                            'title': title,
+                            'year': year,
+                            'media_type': media_type,
                             'timestamp': s.updated_at.isoformat() if s.updated_at else None
                         })
-                except (json.JSONDecodeError, KeyError, AttributeError):
+                except (json.JSONDecodeError, KeyError, AttributeError, IndexError) as e:
                     # Skip sessions with invalid or incomplete data
+                    logger.debug(f"Skipping session in activity feed: {e}")
                     continue
 
             # Today's requests

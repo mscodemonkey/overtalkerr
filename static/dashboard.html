@@ -553,15 +553,15 @@
                     <br><br>
                     <div style="text-align: center; margin-top: 16px;">
                       <div class="loading"></div>
-                      <div style="margin-top: 8px; color: var(--text-secondary);">Reloading in <span id="countdown">5</span>...</div>
+                      <div style="margin-top: 8px; color: var(--text-secondary);">Reloading in <span id="countdown">7</span>...</div>
                     </div>
                   </div>
                 </div>
               `;
               notification.style.display = 'flex';
 
-              // Countdown and reload
-              let seconds = 5;
+              // Countdown and reload (7 seconds = 2s delay + 5s for restart)
+              let seconds = 7;
               const countdownEl = document.getElementById('countdown');
               const countdown = setInterval(() => {
                 seconds--;

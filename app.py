@@ -319,38 +319,46 @@ def perform_update():
                 # Something was updated
                 logger.info(f"Update completed: {output}")
 
-                # Automatically restart the service
+                # Schedule a delayed restart so we can send the response first
+                # Using 'at' command or nohup with sleep to restart after response is sent
                 try:
-                    restart_result = subprocess.run(
-                        ['systemctl', 'restart', 'overtalkerr'],
+                    # Test if systemctl is available
+                    test_result = subprocess.run(
+                        ['systemctl', '--version'],
                         capture_output=True,
-                        text=True,
-                        timeout=10
+                        timeout=5
                     )
 
-                    if restart_result.returncode == 0:
-                        logger.info("Service restarted successfully after update")
+                    if test_result.returncode == 0:
+                        # Schedule restart in background after 2 seconds
+                        # This allows the response to be sent before the service dies
+                        subprocess.Popen(
+                            ['bash', '-c', 'sleep 2 && systemctl restart overtalkerr'],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            start_new_session=True
+                        )
+
+                        logger.info("Service restart scheduled in 2 seconds")
                         return jsonify({
                             'success': True,
                             'updated': True,
                             'restarted': True,
-                            'message': 'Update successful! Service restarted automatically. The page will reload in 5 seconds.',
+                            'message': 'Update successful! Service will restart in 2 seconds. The page will reload automatically.',
                             'output': output
                         })
                     else:
-                        restart_error = restart_result.stderr or "Unknown error"
-                        logger.warning(f"Service restart failed: {restart_error}")
+                        logger.warning("systemctl not available")
                         return jsonify({
                             'success': True,
                             'updated': True,
                             'restarted': False,
-                            'message': f'Update successful but service restart failed: {restart_error}. Please restart manually.',
-                            'output': output,
-                            'restart_error': restart_error
+                            'message': 'Update successful but systemctl not available. Please restart manually: systemctl restart overtalkerr',
+                            'output': output
                         })
 
                 except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError) as e:
-                    logger.warning(f"Could not restart service: {e}")
+                    logger.warning(f"Could not schedule service restart: {e}")
                     return jsonify({
                         'success': True,
                         'updated': True,

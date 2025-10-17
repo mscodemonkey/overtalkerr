@@ -12,6 +12,7 @@ import os
 from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
 from enum import Enum
+from urllib.parse import quote
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -103,11 +104,13 @@ class OverseerrBackend(MediaBackend):
 
     def search(self, query: str, media_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """Search Overseerr"""
-        url = f"{self.base_url}/api/v1/search"
-        params = {"query": query}
+        # Manually encode query to use %20 instead of + for spaces
+        # Some Overseerr versions (especially develop builds) are strict about this
+        encoded_query = quote(query, safe='')
+        url = f"{self.base_url}/api/v1/search?query={encoded_query}"
 
         try:
-            resp = self.session.get(url, params=params, headers=self.get_headers(), timeout=self.timeout)
+            resp = self.session.get(url, headers=self.get_headers(), timeout=self.timeout)
 
             if resp.status_code in [401, 403]:
                 raise MediaBackendAuthError("Invalid API key")

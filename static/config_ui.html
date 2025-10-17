@@ -8,71 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="/static/shared.css">
+
   <style>
-    /* Theme variables */
-    :root[data-theme="light"] {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f9fafb;
-      --bg-card: #ffffff;
-      --text-primary: #111827;
-      --text-secondary: #6b7280;
-      --text-tertiary: #9ca3af;
-      --border-color: #e5e7eb;
-      --shadow: 0 10px 40px rgba(0,0,0,0.1);
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --success: #10b981;
-      --error: #ef4444;
-      --warning: #f59e0b;
-    }
-
-    :root[data-theme="dark"] {
-      --bg-primary: #0b1120;
-      --bg-secondary: #111827;
-      --bg-card: #1f2937;
-      --text-primary: #f9fafb;
-      --text-secondary: #d1d5db;
-      --text-tertiary: #9ca3af;
-      --border-color: #374151;
-      --shadow: 0 10px 40px rgba(0,0,0,0.4);
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --success: #10b981;
-      --error: #ef4444;
-      --warning: #f59e0b;
-    }
-    /* Skip to content link for keyboard users */
-    .skip-link {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      background: var(--accent);
-      color: white;
-      padding: 8px 16px;
-      text-decoration: none;
-      font-weight: 600;
-      border-radius: 0 0 4px 0;
-      z-index: 100;
-    }
-    .skip-link:focus {
-      top: 0;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    /* Config UI-specific styles */
     body {
-      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-primary);
       min-height: 100vh;
       padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
-      transition: background-color 0.3s ease;
     }
 
     .container {
@@ -114,30 +61,6 @@
       color: var(--accent-hover);
     }
 
-    .alert {
-      padding: 12px 16px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      display: none;
-    }
-
-    .alert-success {
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-      color: #155724;
-    }
-
-    .alert-error {
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-
-    .alert-info {
-      background: #d1ecf1;
-      border: 1px solid #bee5eb;
-      color: #0c5460;
-    }
 
     .section {
       margin-bottom: 30px;
@@ -316,20 +239,7 @@
     }
 
     .loading {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      vertical-align: middle;
       margin-left: 8px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
 
     .password-toggle {

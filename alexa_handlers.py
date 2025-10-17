@@ -196,14 +196,15 @@ class DownloadIntentHandler(AbstractRequestHandler):
             platform=VoiceAssistantPlatform.ALEXA,
             user_id=user_id,
             session_id=session_id,
-            intent="DownloadIntent",
+            intent_name="DownloadIntent",
             slots={
                 'MediaTitle': media_title,
                 'Year': year,
                 'MediaType': media_type_text,
                 'Upcoming': upcoming_text,
                 'Season': season_text
-            }
+            },
+            raw_request={}
         )
 
         # Use unified handler for consistent behavior across platforms
@@ -242,8 +243,9 @@ class YesIntentHandler(AbstractRequestHandler):
             platform=VoiceAssistantPlatform.ALEXA,
             user_id=user_id,
             session_id=session_id,
-            intent="YesIntent",
-            slots={}
+            intent_name="YesIntent",
+            slots={},
+            raw_request={}
         )
 
         # Use unified handler
@@ -282,8 +284,9 @@ class NoIntentHandler(AbstractRequestHandler):
             platform=VoiceAssistantPlatform.ALEXA,
             user_id=user_id,
             session_id=session_id,
-            intent="NoIntent",
-            slots={}
+            intent_name="NoIntent",
+            slots={},
+            raw_request={}
         )
 
         # Use unified handler

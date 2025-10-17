@@ -194,7 +194,17 @@ python app.py
 
 ## 🔄 Updating Overtalkerr
 
-Overtalkerr includes built-in update detection and easy update scripts for all installation methods.
+Overtalkerr includes **one-click auto-update** right from the dashboard! No need to SSH into your server.
+
+### One-Click Auto-Update (Recommended) 🎉
+
+1. Open the Overtalkerr dashboard (http://your-server:5000)
+2. If an update is available, you'll see a notification banner at the top
+3. Click **"Install Update"** to automatically download the latest version
+4. Restart the service: `systemctl restart overtalkerr`
+5. Refresh the dashboard - done!
+
+The auto-update feature works for git-based installations (Proxmox LXC, Manual Install). See [docs/auto_update.md](docs/auto_update.md) for details.
 
 ### Automatic Update Detection
 
@@ -202,9 +212,7 @@ The dashboard automatically checks for new releases from GitHub and displays a n
 - On dashboard load
 - Every 6 hours while dashboard is open
 
-![Update notification example](https://via.placeholder.com/600x100/10b981/ffffff?text=🎉+Update+Available!+Version+1.1.0)
-
-### Manual Update
+### Manual Update (Alternative)
 
 Choose the update method based on how you installed Overtalkerr:
 

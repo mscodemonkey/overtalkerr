@@ -520,6 +520,94 @@
   </div>
 
   <script>
+    // Install update
+    async function installUpdate() {
+      const button = event.target;
+      const originalText = button.textContent;
+
+      try {
+        button.disabled = true;
+        button.textContent = 'Installing...';
+
+        const response = await fetch('/api/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          if (result.updated) {
+            // Update successful
+            const notification = document.getElementById('updateNotification');
+
+            if (result.restarted) {
+              // Service restarted successfully - auto-reload
+              notification.innerHTML = `
+                <div class="update-notification-content">
+                  <div class="update-notification-title">✅ Update Complete!</div>
+                  <div class="update-notification-text">
+                    ${result.message}
+                    <br><br>
+                    <div style="text-align: center; margin-top: 16px;">
+                      <div class="loading"></div>
+                      <div style="margin-top: 8px; color: var(--text-secondary);">Reloading in <span id="countdown">5</span>...</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+              notification.style.display = 'flex';
+
+              // Countdown and reload
+              let seconds = 5;
+              const countdownEl = document.getElementById('countdown');
+              const countdown = setInterval(() => {
+                seconds--;
+                if (countdownEl) countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                  clearInterval(countdown);
+                  location.reload();
+                }
+              }, 1000);
+            } else {
+              // Update successful but couldn't restart automatically
+              notification.innerHTML = `
+                <div class="update-notification-content">
+                  <div class="update-notification-title">⚠️ Manual Restart Needed</div>
+                  <div class="update-notification-text">
+                    ${result.message}
+                  </div>
+                </div>
+                <div class="update-notification-actions">
+                  <button class="update-btn update-btn-secondary" onclick="this.parentElement.parentElement.style.display='none'">
+                    Dismiss
+                  </button>
+                </div>
+              `;
+              notification.style.display = 'flex';
+            }
+          } else {
+            // Already up to date
+            alert('Already up to date!');
+            button.textContent = originalText;
+            button.disabled = false;
+          }
+        } else {
+          // Update failed
+          alert('Update failed: ' + result.error);
+          button.textContent = originalText;
+          button.disabled = false;
+        }
+      } catch (error) {
+        console.error('Update error:', error);
+        alert('Update failed: ' + error.message);
+        button.textContent = originalText;
+        button.disabled = false;
+      }
+    }
+
     // Check for updates
     async function checkForUpdates() {
       try {
@@ -538,7 +626,10 @@
               </div>
             </div>
             <div class="update-notification-actions">
-              <a href="${versionInfo.release_url}" target="_blank" rel="noopener" class="update-btn">
+              <button class="update-btn" onclick="installUpdate()">
+                Install Update
+              </button>
+              <a href="${versionInfo.release_url}" target="_blank" rel="noopener" class="update-btn update-btn-secondary">
                 View Release
               </a>
               <button class="update-btn update-btn-secondary" onclick="this.parentElement.parentElement.style.display='none'">

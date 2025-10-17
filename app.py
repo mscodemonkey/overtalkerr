@@ -254,6 +254,133 @@ def get_version():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/update', methods=['POST'])
+def perform_update():
+    """
+    Perform git pull to update Overtalkerr to the latest version.
+
+    This endpoint:
+    1. Runs git pull to get latest code
+    2. Returns update status
+    3. User must manually restart the service after update
+    """
+    import subprocess
+
+    try:
+        # Check if we're in a git repository
+        repo_path = os.path.dirname(os.path.abspath(__file__))
+
+        # Check git status
+        try:
+            result = subprocess.run(
+                ['git', 'status'],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            if result.returncode != 0:
+                return jsonify({
+                    'success': False,
+                    'error': 'Not a git repository or git not available'
+                }), 400
+
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            return jsonify({
+                'success': False,
+                'error': 'Git command failed or not found'
+            }), 400
+
+        # Perform git pull
+        logger.info("Performing git pull to update Overtalkerr")
+
+        result = subprocess.run(
+            ['git', 'pull'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        if result.returncode == 0:
+            output = result.stdout
+
+            # Check if anything was updated
+            if 'Already up to date' in output or 'Already up-to-date' in output:
+                return jsonify({
+                    'success': True,
+                    'updated': False,
+                    'message': 'Already up to date',
+                    'output': output,
+                    'restart_required': False
+                })
+            else:
+                # Something was updated
+                logger.info(f"Update completed: {output}")
+
+                # Automatically restart the service
+                try:
+                    restart_result = subprocess.run(
+                        ['systemctl', 'restart', 'overtalkerr'],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+
+                    if restart_result.returncode == 0:
+                        logger.info("Service restarted successfully after update")
+                        return jsonify({
+                            'success': True,
+                            'updated': True,
+                            'restarted': True,
+                            'message': 'Update successful! Service restarted automatically. The page will reload in 5 seconds.',
+                            'output': output
+                        })
+                    else:
+                        restart_error = restart_result.stderr or "Unknown error"
+                        logger.warning(f"Service restart failed: {restart_error}")
+                        return jsonify({
+                            'success': True,
+                            'updated': True,
+                            'restarted': False,
+                            'message': f'Update successful but service restart failed: {restart_error}. Please restart manually.',
+                            'output': output,
+                            'restart_error': restart_error
+                        })
+
+                except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError) as e:
+                    logger.warning(f"Could not restart service: {e}")
+                    return jsonify({
+                        'success': True,
+                        'updated': True,
+                        'restarted': False,
+                        'message': f'Update successful but could not restart service: {str(e)}. Please restart manually: systemctl restart overtalkerr',
+                        'output': output,
+                        'restart_error': str(e)
+                    })
+        else:
+            error_output = result.stderr or result.stdout
+            logger.error(f"Git pull failed: {error_output}")
+            return jsonify({
+                'success': False,
+                'error': 'Git pull failed',
+                'output': error_output
+            }), 500
+
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'success': False,
+            'error': 'Update timed out'
+        }), 500
+    except Exception as e:
+        log_error("Update failed", e)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 # ========================================
 # ALEXA ENDPOINT
 # ========================================

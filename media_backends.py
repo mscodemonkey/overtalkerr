@@ -259,6 +259,23 @@ class OverseerrBackend(MediaBackend):
         rcopy["_isProcessing"] = status == 3  # PROCESSING (downloading)
         rcopy["_hasRequests"] = len(media_info.get("requests", [])) > 0
 
+        # For TV shows, extract available episode counts if partially available
+        if rcopy.get("_mediaType") == "tv" and status == 4:
+            # Count available episodes from seasons data in mediaInfo
+            seasons = media_info.get("seasons", [])
+            available_episodes = 0
+            total_episodes = 0
+            for season in seasons:
+                # Skip season 0 (specials)
+                if season.get("seasonNumber", 0) == 0:
+                    continue
+                # episodeFileCount = episodes actually available
+                available_episodes += season.get("episodeFileCount", 0)
+                total_episodes += season.get("episodeCount", 0)
+
+            rcopy["_availableEpisodes"] = available_episodes if available_episodes > 0 else None
+            rcopy["_totalEpisodes"] = total_episodes if total_episodes > 0 else None
+
         # Human-readable status
         status_map = {
             1: "unknown",

@@ -158,6 +158,22 @@ def media_type_from_text(text: Optional[str]) -> tuple[Optional[str], Optional[s
     return None, None
 
 
+def build_episode_availability_text(item: Dict[str, Any]) -> str:
+    """
+    Build a natural language description of available episodes for partially available TV shows.
+
+    Returns: String like "1 episode is" or "5 episodes are" or "Some episodes are" if count unknown
+    """
+    available = item.get('_availableEpisodes')
+
+    if available is None or available == 0:
+        return "Some episodes are"
+    elif available == 1:
+        return "1 episode is"
+    else:
+        return f"{available} episodes are"
+
+
 def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_term: Optional[str] = None, include_cast: bool = True) -> str:
     """
     Generate speech for a search result item with availability status.
@@ -247,7 +263,8 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
     if item.get('_isAvailable'):
         speech += ". This is already in your library, so you can watch it now. Is that the one you were thinking of?"
     elif item.get('_isPartiallyAvailable'):
-        speech += ". Some episodes are already available to watch. Is that the one you want?"
+        episode_text = build_episode_availability_text(item)
+        speech += f". {episode_text} already available to watch. Is that the one you want?"
     elif item.get('_isProcessing'):
         speech += ". This is currently being downloaded. Is that the one you want?"
     elif item.get('_isPending'):
@@ -349,7 +366,8 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None,
     if item.get('_isAvailable'):
         speech += ". This is already in your library, so you can watch it now. Is that the one you were thinking of?"
     elif item.get('_isPartiallyAvailable'):
-        speech += ". Some episodes are already available to watch. Is that the one you want?"
+        episode_text = build_episode_availability_text(item)
+        speech += f". {episode_text} already available to watch. Is that the one you want?"
     elif item.get('_isProcessing'):
         speech += ". This is currently being downloaded. Is that the one you want?"
     elif item.get('_isPending'):
@@ -863,8 +881,9 @@ class UnifiedVoiceHandler:
                 # User is requesting a specific season - allow it
                 logger.info(f"Requesting specific season {season_number} of partially available show")
             else:
-                speech = f"Some episodes of {title} are already available to watch."
-                # Continue with request but inform the user
+                # Partially available without specific season request - just tell them to enjoy it
+                speech = f"Perfect! Enjoy watching {title}!"
+                return VoiceResponse(speech=speech, should_end_session=True)
 
         # Create request in backend
         try:

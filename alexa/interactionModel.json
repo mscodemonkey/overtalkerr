@@ -1,120 +1,325 @@
 {
-  "interactionModel": {
-    "languageModel": {
-      "invocationName": "overtalkerr",
-      "intents": [
-        {
-          "name": "DownloadIntent",
-          "slots": [
-            {
-              "name": "MediaTitle",
-              "type": "AMAZON.Movie"
-            },
-            {
-              "name": "Year",
-              "type": "YearFilter"
-            },
-            {
-              "name": "MediaType",
-              "type": "MediaType"
-            },
-            {
-              "name": "Season",
-              "type": "AMAZON.NUMBER"
-            }
-          ],
-          "samples": [
-            "download {MediaTitle}",
-            "download the {MediaTitle}",
-            "download {MediaType} {MediaTitle}",
-            "download the {MediaType} {MediaTitle}",
-            "download {MediaTitle} from {Year}",
-            "download the {MediaType} {MediaTitle} from {Year}",
-            "download the upcoming {MediaType} {MediaTitle}",
-            "download the upcoming {MediaType}",
-            "download the upcoming {MediaTitle}",
-            "download the {MediaTitle} {MediaType}",
-            "download the upcoming {MediaTitle} {MediaType}",
-            "download upcoming {MediaType} {MediaTitle}",
-            "download upcoming {MediaTitle}",
-            "download season {Season} of {MediaTitle}",
-            "download {MediaTitle} season {Season}",
-            "download the {MediaType} {MediaTitle} season {Season}",
-            "request {MediaTitle}",
-            "request the {MediaType} {MediaTitle}",
-            "request {MediaTitle} from {Year}",
-            "get {MediaTitle}",
-            "get the {MediaType} {MediaTitle}",
-            "get {MediaTitle} from {Year}"
-          ]
-        },
-        {
-          "name": "AMAZON.YesIntent",
-          "samples": [
-            "yes please",
-            "yes thank you",
-            "yes thanks",
-            "it is yes",
-            "it is thank you",
-            "it is thanks",
-            "that's it",
-            "that's the one",
-            "correct",
-            "yep",
-            "yeah",
-            "sure"
-          ]
-        },
-        {
-          "name": "AMAZON.NoIntent",
-          "samples": [
-            "no thanks",
-            "no thank you",
-            "that's not it",
-            "not that one",
-            "nope",
-            "wrong one",
-            "next one",
-            "skip"
-          ]
-        },
-        { "name": "AMAZON.HelpIntent", "samples": [] },
-        { "name": "AMAZON.FallbackIntent", "samples": [] },
-        { "name": "AMAZON.CancelIntent", "samples": [] },
-        { "name": "AMAZON.StopIntent", "samples": [] }
-      ],
-      "types": [
-        {
-          "name": "MediaType",
-          "values": [
-            { "name": { "value": "movie", "synonyms": ["film", "motion picture"] } },
-            { "name": { "value": "tv show", "synonyms": ["series", "television show", "tv series", "show"] } }
-          ]
-        },
-        {
-          "name": "YearFilter",
-          "values": [
-            { "id": "this_year", "name": { "value": "this year" } },
-            { "id": "last_year", "name": { "value": "last year" } },
-            { "id": "couple_years", "name": { "value": "a couple years ago", "synonyms": ["a couple of years ago", "couple years ago"] } },
-            { "id": "few_years", "name": { "value": "a few years ago", "synonyms": ["few years ago"] } },
-            { "id": "noughties", "name": { "value": "the noughties", "synonyms": ["the naughties", "noughties", "naughties"] } },
-            { "id": "2020s", "name": { "value": "the twenties", "synonyms": ["the 20s", "the twenty twenties", "twenties"] } },
-            { "id": "2010s", "name": { "value": "the tens", "synonyms": ["the 10s", "the twenty tens"] } },
-            { "id": "2000s", "name": { "value": "the 2000s", "synonyms": ["two thousands"] } },
-            { "id": "1990s", "name": { "value": "the nineties", "synonyms": ["the 90s", "the nineteen nineties", "nineties"] } },
-            { "id": "1980s", "name": { "value": "the eighties", "synonyms": ["the 80s", "the nineteen eighties", "eighties"] } },
-            { "id": "1970s", "name": { "value": "the seventies", "synonyms": ["the 70s", "the nineteen seventies", "seventies"] } },
-            { "id": "1960s", "name": { "value": "the sixties", "synonyms": ["the 60s", "the nineteen sixties", "sixties"] } },
-            { "id": "1950s", "name": { "value": "the fifties", "synonyms": ["the 50s", "the nineteen fifties", "fifties"] } },
-            { "id": "1940s", "name": { "value": "the forties", "synonyms": ["the 40s", "the nineteen forties", "forties"] } },
-            { "id": "1930s", "name": { "value": "the thirties", "synonyms": ["the 30s", "the nineteen thirties", "thirties"] } },
-            { "id": "year_sample_1", "name": { "value": "the year 2025", "synonyms": ["year 2025", "2025"] } },
-            { "id": "year_sample_2", "name": { "value": "the year 1978", "synonyms": ["year 1978", "1978"] } },
-            { "id": "year_sample_3", "name": { "value": "the year 2015", "synonyms": ["year 2015", "2015"] } }
-          ]
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "media finder",
+            "intents": [
+                {
+                    "name": "DownloadIntent",
+                    "slots": [
+                        {
+                            "name": "MediaTitle",
+                            "type": "AMAZON.Movie"
+                        },
+                        {
+                            "name": "Year",
+                            "type": "YearFilter"
+                        },
+                        {
+                            "name": "MediaType",
+                            "type": "MediaType"
+                        },
+                        {
+                            "name": "Season",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "download {MediaTitle}",
+                        "download the {MediaTitle}",
+                        "download {MediaType} {MediaTitle}",
+                        "download the {MediaType} {MediaTitle}",
+                        "download {MediaTitle} from {Year}",
+                        "download the {MediaType} {MediaTitle} from {Year}",
+                        "download the upcoming {MediaType} {MediaTitle}",
+                        "download the upcoming {MediaType}",
+                        "download the upcoming {MediaTitle}",
+                        "download the {MediaTitle} {MediaType}",
+                        "download the upcoming {MediaTitle} {MediaType}",
+                        "download upcoming {MediaType} {MediaTitle}",
+                        "download upcoming {MediaTitle}",
+                        "download season {Season} of {MediaTitle}",
+                        "download {MediaTitle} season {Season}",
+                        "download the {MediaType} {MediaTitle} season {Season}",
+                        "request {MediaTitle}",
+                        "request the {MediaType} {MediaTitle}",
+                        "request {MediaTitle} from {Year}",
+                        "get {MediaTitle}",
+                        "get the {MediaType} {MediaTitle}",
+                        "get {MediaTitle} from {Year}"
+                    ]
+                },
+                {
+                    "name": "AMAZON.YesIntent",
+                    "samples": [
+                        "yes please",
+                        "yes thank you",
+                        "yes thanks",
+                        "it is yes",
+                        "it is thank you",
+                        "it is thanks",
+                        "that's it",
+                        "that's the one",
+                        "this is the one",
+                        "this is it",
+                        "ah yes",
+                        "correct",
+                        "yep",
+                        "yeah",
+                        "sure",
+                        "got it",
+                        "that is the one",
+                        "nah yeah"
+                    ]
+                },
+                {
+                    "name": "AMAZON.NoIntent",
+                    "samples": [
+                        "no thanks",
+                        "no thank you",
+                        "that's not it",
+                        "that's not it no",
+                        "not that one",
+                        "nope",
+                        "wrong one",
+                        "next one",
+                        "skip",
+                        "skip this one",
+                        "not this one",
+                        "yeah nah"
+                    ]
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                }
+            ],
+            "types": [
+                {
+                    "name": "MediaType",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "movie",
+                                "synonyms": [
+                                    "film",
+                                    "motion picture"
+                                ]
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "tv show",
+                                "synonyms": [
+                                    "series",
+                                    "television show",
+                                    "tv series",
+                                    "show"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "YearFilter",
+                    "values": [
+                        {
+                            "id": "this_year",
+                            "name": {
+                                "value": "this year"
+                            }
+                        },
+                        {
+                            "id": "last_year",
+                            "name": {
+                                "value": "last year"
+                            }
+                        },
+                        {
+                            "id": "couple_years",
+                            "name": {
+                                "value": "a couple years ago",
+                                "synonyms": [
+                                    "a couple of years ago",
+                                    "couple years ago"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "few_years",
+                            "name": {
+                                "value": "a few years ago",
+                                "synonyms": [
+                                    "few years ago"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "noughties",
+                            "name": {
+                                "value": "the noughties",
+                                "synonyms": [
+                                    "the naughties",
+                                    "noughties",
+                                    "naughties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "2020s",
+                            "name": {
+                                "value": "the twenties",
+                                "synonyms": [
+                                    "the 20s",
+                                    "the twenty twenties",
+                                    "twenties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "2010s",
+                            "name": {
+                                "value": "the tens",
+                                "synonyms": [
+                                    "the 10s",
+                                    "the twenty tens"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "2000s",
+                            "name": {
+                                "value": "the 2000s",
+                                "synonyms": [
+                                    "two thousands"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "1990s",
+                            "name": {
+                                "value": "the nineties",
+                                "synonyms": [
+                                    "the 90s",
+                                    "the nineteen nineties",
+                                    "nineties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "1980s",
+                            "name": {
+                                "value": "the eighties",
+                                "synonyms": [
+                                    "the 80s",
+                                    "the nineteen eighties",
+                                    "eighties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "1970s",
+                            "name": {
+                                "value": "the seventies",
+                                "synonyms": [
+                                    "the 70s",
+                                    "the nineteen seventies",
+                                    "seventies"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "1960s",
+                            "name": {
+                                "value": "the sixties",
+                                "synonyms": [
+                                    "the 60s",
+                                    "the nineteen sixties",
+                                    "sixties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "1950s",
+                            "name": {
+                                "value": "the fifties",
+                                "synonyms": [
+                                    "the 50s",
+                                    "the nineteen fifties",
+                                    "fifties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "1940s",
+                            "name": {
+                                "value": "the forties",
+                                "synonyms": [
+                                    "the 40s",
+                                    "the nineteen forties",
+                                    "forties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "1930s",
+                            "name": {
+                                "value": "the thirties",
+                                "synonyms": [
+                                    "the 30s",
+                                    "the nineteen thirties",
+                                    "thirties"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "year_sample_1",
+                            "name": {
+                                "value": "the year 2025",
+                                "synonyms": [
+                                    "year 2025",
+                                    "2025"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "year_sample_2",
+                            "name": {
+                                "value": "the year 1978",
+                                "synonyms": [
+                                    "year 1978",
+                                    "1978"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "year_sample_3",
+                            "name": {
+                                "value": "the year 2015",
+                                "synonyms": [
+                                    "year 2015",
+                                    "2015"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
         }
-      ]
     }
-  }
 }

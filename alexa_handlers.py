@@ -18,6 +18,8 @@ import overseerr
 from overseerr import OverseerrError, OverseerrConnectionError, OverseerrAuthError
 from db import db_session, SessionState
 import json
+from voice_assistant_adapter import router, VoiceRequest, VoiceAssistantPlatform
+from unified_voice_handler import unified_handler
 
 
 # ==========================================
@@ -189,87 +191,39 @@ class DownloadIntentHandler(AbstractRequestHandler):
         upcoming_text = get_slot_value(handler_input, "Upcoming")
         season_text = get_slot_value(handler_input, "Season")
 
-        log_request("DownloadIntent", user_id, title=media_title, year=year, media_type=media_type_text)
+        # Build VoiceRequest using the adapter
+        voice_request = VoiceRequest(
+            platform=VoiceAssistantPlatform.ALEXA,
+            user_id=user_id,
+            session_id=session_id,
+            intent="DownloadIntent",
+            slots={
+                'MediaTitle': media_title,
+                'Year': year,
+                'MediaType': media_type_text,
+                'Upcoming': upcoming_text,
+                'Season': season_text
+            }
+        )
 
-        if not media_title:
-            speech = "Please tell me the title. For example, say download the movie Jurassic World from 2015."
-            return (
-                handler_input.response_builder
-                .speak(speech)
-                .ask(speech)
-                .response
+        # Use unified handler for consistent behavior across platforms
+        voice_response = unified_handler.handle_download(voice_request)
+
+        # Build Alexa response
+        response_builder = handler_input.response_builder.speak(voice_response.speech)
+
+        if voice_response.reprompt:
+            response_builder = response_builder.ask(voice_response.reprompt)
+
+        if voice_response.card_text:
+            response_builder = response_builder.set_card(
+                SimpleCard("Overtalkerr", voice_response.card_text)
             )
 
-        # Normalize inputs
-        media_type = media_type_from_text(media_type_text)
-        upcoming_only = False
+        if voice_response.should_end_session:
+            response_builder = response_builder.set_should_end_session(True)
 
-        if upcoming_text:
-            upcoming_only = upcoming_text.lower() in ['yes', 'true', '1', 'upcoming']
-
-        # Check if "upcoming" is in the title itself
-        if media_title and re.search(r"\bupcoming\b", media_title, re.IGNORECASE):
-            upcoming_only = True
-            media_title = re.sub(r"\bupcoming\b", "", media_title, flags=re.IGNORECASE).strip()
-
-        # Normalize year
-        year_filter = None
-        if year:
-            m = re.search(r"(\d{4})", year)
-            if m:
-                year_filter = m.group(1)
-
-        # Extract season number
-        season_number = None
-        if season_text:
-            m = re.search(r"(\d+)", season_text)
-            if m:
-                season_number = int(m.group(1))
-
-        # Search Overseerr
-        try:
-            results = overseerr.search(media_title, media_type)
-        except OverseerrConnectionError:
-            speech = "Sorry, I couldn't connect to the media server. Please try again later."
-            return handler_input.response_builder.speak(speech).response
-        except OverseerrAuthError:
-            speech = "Sorry, there's an authentication problem with the media server. Please contact the administrator."
-            return handler_input.response_builder.speak(speech).response
-        except OverseerrError as e:
-            log_error("Overseerr search failed", e, user_id=user_id, title=media_title)
-            speech = "Sorry, I encountered an error searching for that title. Please try again."
-            return handler_input.response_builder.speak(speech).response
-
-        # Filter and rank results
-        ranked = overseerr.pick_best(results, upcoming_only=upcoming_only, year_filter=year_filter)
-
-        if not ranked:
-            speech = "I couldn't find any matches for that title. Please try a different search."
-            return handler_input.response_builder.speak(speech).response
-
-        # Save state
-        state = {
-            'query': media_title,
-            'media_type': media_type,
-            'year': year_filter,
-            'upcoming_only': upcoming_only,
-            'season': season_number,
-            'results': ranked,
-            'index': 0,
-        }
-        save_state(user_id, session_id, state)
-
-        # Build response
-        first = ranked[0]
-        speech = build_speech_for_item(first, "I found")
-
-        return (
-            handler_input.response_builder
-            .speak(speech)
-            .ask("Is that the one you want?")
-            .set_card(SimpleCard("Overtalkerr", speech))
-            .response
-        )
+        return response_builder.response
 
 
 class YesIntentHandler(AbstractRequestHandler):
@@ -283,61 +237,33 @@ class YesIntentHandler(AbstractRequestHandler):
         user_id = get_user_id(handler_input)
         session_id = get_session_id(handler_input)
 
-        log_request("YesIntent", user_id)
+        # Build VoiceRequest
+        voice_request = VoiceRequest(
+            platform=VoiceAssistantPlatform.ALEXA,
+            user_id=user_id,
+            session_id=session_id,
+            intent="YesIntent",
+            slots={}
+        )
 
-        state = load_state(user_id, session_id)
+        # Use unified handler
+        voice_response = unified_handler.handle_yes(voice_request)
 
-        if not state:
-            speech = "I don't have an active search. Please say a title to start a new download request."
-            return (
-                handler_input.response_builder
-                .speak(speech)
-                .ask(speech)
-                .response
+        # Build Alexa response
+        response_builder = handler_input.response_builder.speak(voice_response.speech)
+
+        if voice_response.reprompt:
+            response_builder = response_builder.ask(voice_response.reprompt)
+
+        if voice_response.card_text:
+            response_builder = response_builder.set_card(
+                SimpleCard("Overtalkerr", voice_response.card_text)
             )
 
-        idx = state.get('index', 0)
-        results = state.get('results', [])
+        if voice_response.should_end_session:
+            response_builder = response_builder.set_should_end_session(True)
 
-        if idx >= len(results):
-            speech = "I've run out of alternatives. Please start a new search."
-            return handler_input.response_builder.speak(speech).response
-
-        chosen = results[idx]
-        media_id = chosen.get('id') or chosen.get('mediaId') or chosen.get('tmdbId')
-        media_type = chosen.get('_mediaType') or state.get('media_type') or 'movie'
-        season_number = state.get('season')
-
-        if not media_id:
-            speech = "Sorry, I couldn't determine the media ID. Please try a different title."
-            return handler_input.response_builder.speak(speech).response
-
-        # Create request in Overseerr
-        try:
-            result = overseerr.request_media(int(media_id), media_type, season=season_number)
-
-            # Check if it was already requested
-            if result.get('message') and 'already requested' in result.get('message', '').lower():
-                speech = "That media has already been requested!"
-            else:
-                title = chosen.get('_title', 'the media')
-                speech = f"Okay! I've requested {title}. It should be available soon."
-
-        except OverseerrConnectionError:
-            speech = "Sorry, I couldn't connect to the media server. Your request wasn't submitted."
-            return handler_input.response_builder.speak(speech).response
-        except OverseerrError as e:
-            log_error("Failed to create Overseerr request", e, user_id=user_id, media_id=media_id)
-            speech = "Sorry, I couldn't create the request. Please try again later."
-            return handler_input.response_builder.speak(speech).response
-
-        return (
-            handler_input.response_builder
-            .speak(speech)
-            .set_card(SimpleCard("Overtalkerr", speech))
-            .set_should_end_session(True)
-            .response
-        )
+        return response_builder.response
 
 
 class NoIntentHandler(AbstractRequestHandler):
@@ -351,46 +277,33 @@ class NoIntentHandler(AbstractRequestHandler):
         user_id = get_user_id(handler_input)
         session_id = get_session_id(handler_input)
 
-        log_request("NoIntent", user_id)
-
-        state = load_state(user_id, session_id)
-
-        if not state:
-            speech = "Please tell me the title. For example, say download the movie Jurassic World from 2015."
-            return (
-                handler_input.response_builder
-                .speak(speech)
-                .ask(speech)
-                .response
-            )
-
-        idx = state.get('index', 0) + 1
-        results = state.get('results', [])
-
-        if idx >= len(results):
-            speech = "That's all I could find. Would you like to search for something else?"
-            return (
-                handler_input.response_builder
-                .speak(speech)
-                .ask("What would you like to download?")
-                .response
-            )
-
-        # Update state
-        state['index'] = idx
-        save_state(user_id, session_id, state)
-
-        # Build response
-        next_item = results[idx]
-        speech = build_speech_for_next(next_item)
-
-        return (
-            handler_input.response_builder
-            .speak(speech)
-            .ask("Is that the one?")
-            .set_card(SimpleCard("Overtalkerr", speech))
-            .response
+        # Build VoiceRequest
+        voice_request = VoiceRequest(
+            platform=VoiceAssistantPlatform.ALEXA,
+            user_id=user_id,
+            session_id=session_id,
+            intent="NoIntent",
+            slots={}
         )
+
+        # Use unified handler
+        voice_response = unified_handler.handle_no(voice_request)
+
+        # Build Alexa response
+        response_builder = handler_input.response_builder.speak(voice_response.speech)
+
+        if voice_response.reprompt:
+            response_builder = response_builder.ask(voice_response.reprompt)
+
+        if voice_response.card_text:
+            response_builder = response_builder.set_card(
+                SimpleCard("Overtalkerr", voice_response.card_text)
+            )
+
+        if voice_response.should_end_session:
+            response_builder = response_builder.set_should_end_session(True)
+
+        return response_builder.response
 
 
 class HelpIntentHandler(AbstractRequestHandler):

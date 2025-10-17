@@ -158,7 +158,7 @@ def media_type_from_text(text: Optional[str]) -> tuple[Optional[str], Optional[s
     return None, None
 
 
-def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_term: Optional[str] = None) -> str:
+def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_term: Optional[str] = None, include_cast: bool = True) -> str:
     """
     Generate speech for a search result item with availability status.
 
@@ -166,6 +166,7 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
         item: The search result item
         prefix: Opening phrase (default "I found")
         user_term: User's preferred terminology (e.g., "film", "movie", "show")
+        include_cast: Whether to fetch and include cast information (default True)
     """
     from datetime import datetime
     import random
@@ -194,6 +195,20 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
     else:
         type_word = 'movie' if mtype == 'movie' else 'TV show'
 
+    # Fetch cast information if requested and available
+    cast_text = ""
+    if include_cast:
+        media_id = item.get('id')
+        if media_id and mtype:
+            details = overseerr.get_media_details(media_id, mtype)
+            if details and details.get('cast'):
+                cast_list = details['cast']
+                if len(cast_list) >= 2:
+                    # Format: "with Actor1 and Actor2"
+                    cast_text = f", with {cast_list[0]} and {cast_list[1]}"
+                elif len(cast_list) == 1:
+                    cast_text = f", starring {cast_list[0]}"
+
     # Build base speech
     if year:
         if is_unreleased:
@@ -205,7 +220,7 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
                 f"premiering in {year}",
             ]
             date_part = random.choice(date_phrases)
-            speech = f"{prefix} the {type_word} {title}, {date_part}"
+            speech = f"{prefix} the {type_word} {title}, {date_part}{cast_text}"
         else:
             # Varied date phrasing for released content
             date_phrases = [
@@ -218,14 +233,14 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
 
             # Vary structure: "the movie Superman from 1978" vs "a movie from 1978, Superman"
             if random.choice([True, False]):
-                speech = f"{prefix} the {type_word} {title} {date_part}"
+                speech = f"{prefix} the {type_word} {title} {date_part}{cast_text}"
             else:
                 if "from" in date_part or "in" in date_part:
-                    speech = f"{prefix} a {type_word} {date_part}, {title}"
+                    speech = f"{prefix} a {type_word} {date_part}, {title}{cast_text}"
                 else:
-                    speech = f"{prefix} the {year} {type_word} {title}"
+                    speech = f"{prefix} the {year} {type_word} {title}{cast_text}"
     else:
-        speech = f"{prefix} the {type_word} {title}"
+        speech = f"{prefix} the {type_word} {title}{cast_text}"
 
     # Add availability status and appropriate question
     # CONSISTENT LOGIC: Yes = "that's the one", No = "show me next"
@@ -247,7 +262,7 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
     return speech
 
 
-def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None, attempt: int = 0) -> str:
+def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None, attempt: int = 0, include_cast: bool = True) -> str:
     """
     Generate speech for the next alternative result with varied phrasing.
 
@@ -255,6 +270,7 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None,
         item: The search result item
         user_term: User's preferred terminology (e.g., "film", "movie", "show")
         attempt: Which attempt this is (0-based) for varying the phrasing
+        include_cast: Whether to fetch and include cast information (default True)
     """
     import random
 
@@ -272,6 +288,19 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None,
     else:
         type_word = 'movie' if mtype == 'movie' else 'TV show'
 
+    # Fetch cast information if requested and available
+    cast_text = ""
+    if include_cast:
+        media_id = item.get('id')
+        if media_id and mtype:
+            details = overseerr.get_media_details(media_id, mtype)
+            if details and details.get('cast'):
+                cast_list = details['cast']
+                if len(cast_list) >= 2:
+                    cast_text = f", with {cast_list[0]} and {cast_list[1]}"
+                elif len(cast_list) == 1:
+                    cast_text = f", starring {cast_list[0]}"
+
     # Build the title part with year if available
     if year:
         # Varied date phrasing options
@@ -286,17 +315,17 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None,
         # Also vary whether we say "the 1978 movie" or "movie from 1978"
         if random.choice([True, False]):
             # "the movie Superman from 1978"
-            title_part = f"the {type_word} {title} {date_part}"
+            title_part = f"the {type_word} {title} {date_part}{cast_text}"
         else:
             # "the 1978 movie Superman" or "a movie from 1978, Superman"
             if "from" in date_part or "in" in date_part:
                 # "a movie from 1978, Superman"
-                title_part = f"a {type_word} {date_part}, {title}"
+                title_part = f"a {type_word} {date_part}, {title}{cast_text}"
             else:
                 # "the 1978 movie Superman"
-                title_part = f"the {year} {type_word} {title}"
+                title_part = f"the {year} {type_word} {title}{cast_text}"
     else:
-        title_part = f"the {type_word} {title}"
+        title_part = f"the {type_word} {title}{cast_text}"
 
     # Varied opening phrases based on attempt number
     # Use attempt % 6 to cycle through 6 different phrasings

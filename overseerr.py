@@ -197,6 +197,28 @@ def pick_best(results: List[Dict[str, Any]], *, upcoming_only: bool, year_filter
     return results_sorted
 
 
+def get_media_details(media_id: int, media_type: str) -> Optional[Dict[str, Any]]:
+    """
+    Get detailed information about a specific media item including cast.
+
+    Args:
+        media_id: TMDB media ID
+        media_type: 'movie' or 'tv'
+
+    Returns:
+        Dict with 'cast' (list of names), 'director' (str), 'genres' (list), or None if unavailable
+    """
+    try:
+        logger.debug(f"Fetching details for {media_type} {media_id}")
+        details = _backend.get_details(media_id, media_type)
+        if details:
+            logger.info(f"Got details for {media_type} {media_id}: {len(details.get('cast', []))} cast members")
+        return details
+    except Exception as e:
+        logger.warning(f"Failed to fetch details for {media_type} {media_id}: {e}")
+        return None
+
+
 def request_media(media_id: int, media_type: str, season: Optional[int] = None) -> Dict[str, Any]:
     """
     Create a media request using the configured backend (Overseerr/Jellyseerr/Ombi).

@@ -76,6 +76,11 @@ class MediaBackend(ABC):
         pass
 
     @abstractmethod
+    def get_details(self, media_id: int, media_type: str) -> Optional[Dict[str, Any]]:
+        """Get detailed information about media including cast"""
+        pass
+
+    @abstractmethod
     def get_headers(self) -> Dict[str, str]:
         """Get API headers"""
         pass
@@ -158,6 +163,62 @@ class OverseerrBackend(MediaBackend):
             raise MediaBackendConnectionError("Connection failed")
         except Exception as e:
             raise MediaBackendError(f"Request failed: {str(e)}")
+
+    def get_details(self, media_id: int, media_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Get detailed information about a movie or TV show including cast.
+
+        Returns:
+            Dict with 'cast' field containing list of actor names, or None if fetch fails
+        """
+        # Overseerr/TMDB provides detailed info at /api/v1/{movie|tv}/{tmdbId}
+        endpoint = f"api/v1/{media_type}/{media_id}"
+        url = f"{self.base_url}/{endpoint}"
+
+        try:
+            resp = self.session.get(url, headers=self.get_headers(), timeout=self.timeout)
+
+            if resp.status_code == 404:
+                logger.warning(f"Media details not found: {media_type} {media_id}")
+                return None
+
+            if resp.status_code in [401, 403]:
+                logger.warning(f"Auth failed fetching details for {media_type} {media_id}")
+                return None
+
+            resp.raise_for_status()
+            details = resp.json()
+
+            # Extract cast from credits
+            credits = details.get('credits', {})
+            cast_list = credits.get('cast', [])
+
+            # Get top 2-3 cast members
+            cast_names = [person.get('name') for person in cast_list[:3] if person.get('name')]
+
+            return {
+                'cast': cast_names,
+                'director': self._extract_director(credits),
+                'genres': [g.get('name') for g in details.get('genres', [])],
+            }
+
+        except requests.exceptions.Timeout:
+            logger.warning(f"Timeout fetching details for {media_type} {media_id}")
+            return None
+        except requests.exceptions.ConnectionError:
+            logger.warning(f"Connection error fetching details for {media_type} {media_id}")
+            return None
+        except Exception as e:
+            logger.warning(f"Error fetching details for {media_type} {media_id}: {e}")
+            return None
+
+    def _extract_director(self, credits: Dict[str, Any]) -> Optional[str]:
+        """Extract director name from credits (movies only)"""
+        crew = credits.get('crew', [])
+        for person in crew:
+            if person.get('job') == 'Director':
+                return person.get('name')
+        return None
 
     def normalize_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize Overseerr result with media status information"""
@@ -366,6 +427,16 @@ class OmbiBackend(MediaBackend):
             raise MediaBackendConnectionError("Request timeout")
         except requests.exceptions.ConnectionError:
             raise MediaBackendConnectionError("Connection failed")
+
+    def get_details(self, media_id: int, media_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Get detailed information about media including cast.
+
+        Note: Ombi doesn't have a built-in endpoint for detailed media info with cast,
+        so this is a stub that returns None. Cast information won't be available for Ombi users.
+        """
+        logger.debug(f"Ombi doesn't support get_details for {media_type} {media_id}")
+        return None
 
     def normalize_result(self, result: Dict[str, Any], media_type: str) -> Dict[str, Any]:
         """

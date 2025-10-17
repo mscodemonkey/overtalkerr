@@ -53,6 +53,7 @@ Overtalkerr supports the three most widely-used media request managers in the se
   - Genre extraction from queries ("scary movie", "funny show")
   - Smart result ranking with similarity scores
   - Quality filtering to remove low-quality/spam results
+  - **Cast information** - Automatically mentions top actors to help identify movies/shows
 - **📊 Smart Availability Checking**:
   - Automatically detects if media is already in your library
   - Warns you before requesting duplicates

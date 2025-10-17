@@ -247,7 +247,7 @@ def build_speech_for_item(item: Dict[str, Any], prefix: str = "I found", user_te
     if item.get('_isAvailable'):
         speech += ". This is already in your library, so you can watch it now. Is that the one you were thinking of?"
     elif item.get('_isPartiallyAvailable'):
-        speech += ". This is partially in your library. Is that the one you want?"
+        speech += ". Some episodes are already available to watch. Is that the one you want?"
     elif item.get('_isProcessing'):
         speech += ". This is currently being downloaded. Is that the one you want?"
     elif item.get('_isPending'):
@@ -349,7 +349,7 @@ def build_speech_for_next(item: Dict[str, Any], user_term: Optional[str] = None,
     if item.get('_isAvailable'):
         speech += ". This is already in your library, so you can watch it now. Is that the one you were thinking of?"
     elif item.get('_isPartiallyAvailable'):
-        speech += ". This is partially in your library. Is that the one you want?"
+        speech += ". Some episodes are already available to watch. Is that the one you want?"
     elif item.get('_isProcessing'):
         speech += ". This is currently being downloaded. Is that the one you want?"
     elif item.get('_isPending'):
@@ -849,7 +849,7 @@ class UnifiedVoiceHandler:
 
         # Check if media is being processed
         if chosen.get('_isProcessing'):
-            speech = f"{title} is already being downloaded. It should be available soon!"
+            speech = f"Perfect! {title} should be available for you to watch soon!"
             return VoiceResponse(speech=speech, should_end_session=True)
 
         # Check if media is pending approval
@@ -863,7 +863,7 @@ class UnifiedVoiceHandler:
                 # User is requesting a specific season - allow it
                 logger.info(f"Requesting specific season {season_number} of partially available show")
             else:
-                speech = f"{title} is partially in your library. Some content may already be available."
+                speech = f"Some episodes of {title} are already available to watch."
                 # Continue with request but inform the user
 
         # Create request in backend

@@ -48,8 +48,36 @@
             "get {MediaTitle} from {Year}"
           ]
         },
-        { "name": "AMAZON.YesIntent", "samples": [] },
-        { "name": "AMAZON.NoIntent", "samples": [] },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": [
+            "yes please",
+            "yes thank you",
+            "yes thanks",
+            "it is yes",
+            "it is thank you",
+            "it is thanks",
+            "that's it",
+            "that's the one",
+            "correct",
+            "yep",
+            "yeah",
+            "sure"
+          ]
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": [
+            "no thanks",
+            "no thank you",
+            "that's not it",
+            "not that one",
+            "nope",
+            "wrong one",
+            "next one",
+            "skip"
+          ]
+        },
         { "name": "AMAZON.HelpIntent", "samples": [] },
         { "name": "AMAZON.FallbackIntent", "samples": [] },
         { "name": "AMAZON.CancelIntent", "samples": [] },

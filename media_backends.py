@@ -112,6 +112,14 @@ class OverseerrBackend(MediaBackend):
             if resp.status_code in [401, 403]:
                 raise MediaBackendAuthError("Invalid API key")
 
+            # Log the response for debugging 400 errors
+            if resp.status_code == 400:
+                try:
+                    error_body = resp.json()
+                    logger.error(f"Overseerr 400 error: {error_body}")
+                except:
+                    logger.error(f"Overseerr 400 error (raw): {resp.text}")
+
             resp.raise_for_status()
             data = resp.json() or {}
             results = data.get("results", [])

@@ -153,8 +153,14 @@ class OverseerrBackend(MediaBackend):
             "mediaType": media_type,
         }
 
-        if media_type == 'tv' and season is not None:
-            payload["seasons"] = [season]
+        if media_type == 'tv':
+            if season is not None:
+                # Request specific season
+                payload["seasons"] = [season]
+            else:
+                # Request all seasons (using "all" keyword that Overseerr supports)
+                # Note: This will request all available seasons
+                payload["seasons"] = "all"
 
         try:
             resp = self.session.post(url, json=payload, headers=self.get_headers(), timeout=self.timeout)

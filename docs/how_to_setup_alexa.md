@@ -31,23 +31,30 @@ A "skill" is what Amazon calls third-party apps for Alexa. We're going to create
 ### Step 2: Create a New Skill
 
 1. Click the big **"Create Skill"** button
-2. Fill in the form:
+2. Fill in the form on **Page 1**:
 
    **Skill name**: Type `Overtalkerr` (or whatever you want - this is just for you to see)
 
    **Primary locale**: Choose **English (US)** (or your preferred English variant)
 
+   **Experience type**: Select **Other**
+   - This is a personal skill for your own use, not a game or smart home device
+
    **Choose a model**: Select **Custom**
+   - We're building a custom skill with our own interaction model
 
-   **Choose a method**: Select **Provision your own**
+3. Click **"Next"** at the top right
 
-   **Hosting services**: Select **Provision your own** (since you're running your own server!)
+4. On **Page 2** (Hosting services), fill in:
 
-3. Click **"Create skill"** at the top right
+   **Choose a method to host your skill's backend resources**: Select **Provision your own**
+   - You're running your own server, not using AWS Lambda
 
-4. On the next screen, choose **"Start from scratch"**
+5. Click **"Next"** at the top right
 
-5. Click **"Continue with template"**
+6. On **Page 3** (Template), choose **"Start from scratch"**
+
+7. Click **"Create skill"** at the top right
 
 Wait a few seconds while Amazon sets everything up. You'll be taken to your new skill's dashboard!
 
@@ -75,7 +82,11 @@ This is where the magic happens! Instead of manually creating all the intents, w
 
 1. In your Overtalkerr project folder, find the file: `alexa/interactionModel.json`
 2. Open it in a text editor (Notepad, TextEdit, VS Code, etc.)
-3. Select everything (Ctrl+A or Cmd+A) and copy it (Ctrl+C or Cmd+C)
+3. **IMPORTANT**: Look for line 4 which says `"invocationName": "overtalkerr"`
+   - If you used a different invocation name in Part 2 (like "over talker"), change this line to match
+   - Example: `"invocationName": "over talker"`
+   - The invocation name here MUST match what you set in Part 2!
+4. Select everything (Ctrl+A or Cmd+A) and copy it (Ctrl+C or Cmd+C)
 
 ### Step 2: Import It into Alexa
 

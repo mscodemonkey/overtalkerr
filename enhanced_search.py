@@ -226,6 +226,30 @@ class SearchEnhancer:
         return False
 
     @staticmethod
+    def is_allowed_language(result: Dict[str, Any]) -> bool:
+        """
+        Check if result is in an allowed language based on configuration.
+
+        Returns:
+            True if language is allowed or no language filter is set, False otherwise
+        """
+        from config import Config
+
+        # If no language filter configured, allow all
+        if not Config.LANGUAGE_FILTER:
+            return True
+
+        # Get original language from result (ISO 639-1 code)
+        original_language = result.get('originalLanguage', '').lower()
+
+        # If no language specified in result, allow it (benefit of doubt)
+        if not original_language:
+            return True
+
+        # Check if language is in allowed list
+        return original_language in Config.LANGUAGE_FILTER
+
+    @staticmethod
     def fuzzy_match_results(query: str, results: List[Dict[str, Any]], threshold: int = 70) -> List[Dict[str, Any]]:
         """
         Re-rank results using intelligent matching with priority tiers:
@@ -254,6 +278,12 @@ class SearchEnhancer:
             # Skip low-quality results
             if SearchEnhancer.is_low_quality_result(result):
                 logger.debug(f"Filtering low-quality result: {result.get('title', 'unknown')} ({result.get('releaseDate', 'no date')})")
+                continue
+
+            # Skip results not in allowed languages
+            if not SearchEnhancer.is_allowed_language(result):
+                original_lang = result.get('originalLanguage', 'unknown')
+                logger.debug(f"Filtering non-allowed language: {result.get('title', 'unknown')} (language: {original_lang})")
                 continue
             title = result.get('_title', result.get('title', result.get('name', '')))
             title_lower = title.lower().strip()

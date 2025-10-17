@@ -21,6 +21,7 @@ from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler, AbstractExceptionHandler
 from ask_sdk_core.utils import is_request_type, is_intent_name
 from ask_sdk_core.handler_input import HandlerInput
+from ask_sdk_core.serialize import DefaultSerializer
 from ask_sdk_model import Response as AlexaResponse
 from ask_sdk_model.ui import SimpleCard
 
@@ -51,6 +52,9 @@ if not Config.MOCK_BACKEND:
 
 # Import Alexa handlers from dedicated module
 from alexa_handlers import skill as alexa_skill
+
+# Initialize Alexa serializer for request/response handling
+alexa_serializer = DefaultSerializer()
 
 # ========================================
 # DASHBOARD / LANDING PAGE
@@ -112,14 +116,21 @@ def get_stats():
 
             stats['recent_activity'] = []
             for s in recent:
-                if s.session_data and 'chosen_result' in s.session_data:
-                    result = s.session_data['chosen_result']
-                    stats['recent_activity'].append({
-                        'title': result.get('title', 'Unknown'),
-                        'year': result.get('year'),
-                        'media_type': result.get('mediaType', 'unknown'),
-                        'timestamp': s.updated_at.isoformat() if s.updated_at else None
-                    })
+                try:
+                    # Parse the JSON from state_json column
+                    import json
+                    state_data = json.loads(s.state_json) if s.state_json else {}
+                    if state_data and 'chosen_result' in state_data:
+                        result = state_data['chosen_result']
+                        stats['recent_activity'].append({
+                            'title': result.get('title', 'Unknown'),
+                            'year': result.get('year'),
+                            'media_type': result.get('mediaType', 'unknown'),
+                            'timestamp': s.updated_at.isoformat() if s.updated_at else None
+                        })
+                except (json.JSONDecodeError, KeyError, AttributeError):
+                    # Skip sessions with invalid or incomplete data
+                    continue
 
             # Today's requests
             today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -226,13 +237,19 @@ def alexa_webhook():
     This endpoint handles all Alexa skill requests with proper verification.
     """
     try:
-        # Get request data
+        # Get raw request data
         request_data = request.get_json()
 
         logger.debug("Received Alexa request", extra={"request_type": request_data.get('request', {}).get('type')})
 
+        # Deserialize the JSON dict into a proper RequestEnvelope object
+        request_envelope = alexa_serializer.deserialize(
+            payload=json.dumps(request_data),
+            obj_type='ask_sdk_model.request_envelope.RequestEnvelope'
+        )
+
         # Process with ask-sdk-python skill
-        response = alexa_skill.invoke(request_envelope=request_data, context=None)
+        response = alexa_skill.invoke(request_envelope=request_envelope, context=None)
 
         return jsonify(response)
 

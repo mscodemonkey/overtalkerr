@@ -44,6 +44,9 @@ class Config:
     # UI Theme
     UI_THEME: str  # 'light', 'dark', or 'auto'
 
+    # Content Filtering
+    LANGUAGE_FILTER: list[str]  # List of ISO 639-1 language codes (e.g., ['en', 'es'])
+
     @classmethod
     def load(cls) -> None:
         """Load and validate all configuration"""
@@ -77,6 +80,10 @@ class Config:
         # UI Theme
         cls.UI_THEME = os.getenv("UI_THEME", "auto").lower()
 
+        # Language Filter (comma-separated ISO 639-1 codes)
+        language_filter_str = os.getenv("LANGUAGE_FILTER", "en")
+        cls.LANGUAGE_FILTER = [lang.strip().lower() for lang in language_filter_str.split(",") if lang.strip()]
+
         # Validate configuration
         cls._validate()
 
@@ -85,6 +92,7 @@ class Config:
             "mock_mode": cls.MOCK_BACKEND,
             "database": cls.DATABASE_URL.split("://")[0],  # Just show db type
             "session_ttl_hours": cls.SESSION_TTL_HOURS,
+            "language_filter": cls.LANGUAGE_FILTER,
         })
 
     @classmethod
@@ -127,6 +135,15 @@ class Config:
         if cls.UI_THEME not in valid_themes:
             logger.warning(f"Invalid UI_THEME '{cls.UI_THEME}', defaulting to auto")
             cls.UI_THEME = "auto"
+
+        # Validate language codes (ISO 639-1 are 2-character codes)
+        invalid_codes = [lang for lang in cls.LANGUAGE_FILTER if len(lang) != 2]
+        if invalid_codes:
+            logger.warning(f"Invalid language codes (must be 2 characters): {invalid_codes}")
+            cls.LANGUAGE_FILTER = [lang for lang in cls.LANGUAGE_FILTER if len(lang) == 2]
+            if not cls.LANGUAGE_FILTER:
+                logger.warning("No valid language codes found, defaulting to 'en'")
+                cls.LANGUAGE_FILTER = ["en"]
 
     @classmethod
     def check_connectivity(cls) -> bool:

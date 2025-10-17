@@ -12,15 +12,11 @@
             },
             {
               "name": "Year",
-              "type": "AMAZON.FOUR_DIGIT_NUMBER"
+              "type": "YearFilter"
             },
             {
               "name": "MediaType",
               "type": "MediaType"
-            },
-            {
-              "name": "Upcoming",
-              "type": "AMAZON.SearchQuery"
             },
             {
               "name": "Season",
@@ -46,8 +42,10 @@
             "download the {MediaType} {MediaTitle} season {Season}",
             "request {MediaTitle}",
             "request the {MediaType} {MediaTitle}",
+            "request {MediaTitle} from {Year}",
             "get {MediaTitle}",
-            "get the {MediaType} {MediaTitle}"
+            "get the {MediaType} {MediaTitle}",
+            "get {MediaTitle} from {Year}"
           ]
         },
         { "name": "AMAZON.YesIntent", "samples": [] },
@@ -63,6 +61,29 @@
           "values": [
             { "name": { "value": "movie", "synonyms": ["film", "motion picture"] } },
             { "name": { "value": "tv show", "synonyms": ["series", "television show", "tv series", "show"] } }
+          ]
+        },
+        {
+          "name": "YearFilter",
+          "values": [
+            { "id": "this_year", "name": { "value": "this year" } },
+            { "id": "last_year", "name": { "value": "last year" } },
+            { "id": "couple_years", "name": { "value": "a couple years ago", "synonyms": ["a couple of years ago", "couple years ago"] } },
+            { "id": "few_years", "name": { "value": "a few years ago", "synonyms": ["few years ago"] } },
+            { "id": "noughties", "name": { "value": "the noughties", "synonyms": ["the naughties", "noughties", "naughties"] } },
+            { "id": "2020s", "name": { "value": "the twenties", "synonyms": ["the 20s", "the twenty twenties", "twenties"] } },
+            { "id": "2010s", "name": { "value": "the tens", "synonyms": ["the 10s", "the twenty tens"] } },
+            { "id": "2000s", "name": { "value": "the 2000s", "synonyms": ["two thousands"] } },
+            { "id": "1990s", "name": { "value": "the nineties", "synonyms": ["the 90s", "the nineteen nineties", "nineties"] } },
+            { "id": "1980s", "name": { "value": "the eighties", "synonyms": ["the 80s", "the nineteen eighties", "eighties"] } },
+            { "id": "1970s", "name": { "value": "the seventies", "synonyms": ["the 70s", "the nineteen seventies", "seventies"] } },
+            { "id": "1960s", "name": { "value": "the sixties", "synonyms": ["the 60s", "the nineteen sixties", "sixties"] } },
+            { "id": "1950s", "name": { "value": "the fifties", "synonyms": ["the 50s", "the nineteen fifties", "fifties"] } },
+            { "id": "1940s", "name": { "value": "the forties", "synonyms": ["the 40s", "the nineteen forties", "forties"] } },
+            { "id": "1930s", "name": { "value": "the thirties", "synonyms": ["the 30s", "the nineteen thirties", "thirties"] } },
+            { "id": "year_sample_1", "name": { "value": "the year 2025", "synonyms": ["year 2025", "2025"] } },
+            { "id": "year_sample_2", "name": { "value": "the year 1978", "synonyms": ["year 1978", "1978"] } },
+            { "id": "year_sample_3", "name": { "value": "the year 2015", "synonyms": ["year 2015", "2015"] } }
           ]
         }
       ]

@@ -515,7 +515,7 @@
     </main>
 
     <footer class="footer" role="contentinfo">
-      Overtalkerr v1.0 Beta • Voice Assistant for Media Requests
+      <span id="footerVersion">Overtalkerr</span> • Voice Assistant for Media Requests
     </footer>
   </div>
 
@@ -615,6 +615,11 @@
         if (!response.ok) return;
 
         const versionInfo = await response.json();
+
+        // Update footer with current version
+        if (versionInfo.current_version) {
+          document.getElementById('footerVersion').textContent = `Overtalkerr v${versionInfo.current_version}`;
+        }
 
         if (versionInfo.update_available) {
           const notification = document.getElementById('updateNotification');

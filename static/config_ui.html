@@ -467,6 +467,21 @@
         </div>
       </div>
 
+      <!-- Enhanced Search Configuration -->
+      <div class="section">
+        <div class="section-title">🔍 Enhanced Search</div>
+
+        <div class="form-group">
+          <label for="languageFilter">Language Filter</label>
+          <input type="text" id="languageFilter" name="LANGUAGE_FILTER" placeholder="en,es,fr" aria-describedby="language-filter-help">
+          <span id="language-filter-help" class="help-text">
+            Comma-separated list of ISO 639-1 language codes to filter results (e.g., "en,es,fr" for English, Spanish, French).<br>
+            <strong>Common codes:</strong> en (English), es (Spanish), fr (French), de (German), it (Italian), ja (Japanese), ko (Korean), zh (Chinese)<br>
+            Leave empty to show all languages. Default: en
+          </span>
+        </div>
+      </div>
+
       <!-- Logging Configuration -->
       <div class="section">
         <div class="section-title">📝 Logging</div>
@@ -525,6 +540,7 @@
         document.getElementById('flaskEnv').value = config.FLASK_ENV || 'production';
         document.getElementById('databaseUrl').value = config.DATABASE_URL || 'sqlite:///./data/overtalkerr.db';
         document.getElementById('sessionTtl').value = config.SESSION_TTL_HOURS || '24';
+        document.getElementById('languageFilter').value = config.LANGUAGE_FILTER || 'en';
         document.getElementById('logLevel').value = config.LOG_LEVEL || 'INFO';
         document.getElementById('logFormat').value = config.LOG_FORMAT || 'json';
         document.getElementById('uiTheme').value = config.UI_THEME || 'auto';

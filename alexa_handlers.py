@@ -4,6 +4,7 @@ Alexa skill handlers using ask-sdk-python (modern Alexa SDK).
 This module contains all Alexa intent handlers, replacing the deprecated Flask-Ask framework.
 """
 import re
+import datetime
 from typing import Optional, Dict, Any
 
 from ask_sdk_core.skill_builder import SkillBuilder
@@ -17,6 +18,18 @@ import overseerr
 from overseerr import OverseerrError, OverseerrConnectionError, OverseerrAuthError
 from db import db_session, SessionState
 import json
+
+
+# ==========================================
+# JSON Encoder for Date Objects
+# ==========================================
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder to handle date and datetime objects"""
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 # ==========================================
@@ -96,7 +109,7 @@ def save_state(user_id: str, conversation_id: str, state: Dict[str, Any]):
             )
             .one_or_none()
         )
-        payload = json.dumps(state)
+        payload = json.dumps(state, cls=DateTimeEncoder)
         if existing:
             existing.state_json = payload
         else:

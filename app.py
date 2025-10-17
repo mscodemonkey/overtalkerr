@@ -249,9 +249,12 @@ def alexa_webhook():
         )
 
         # Process with ask-sdk-python skill
-        response = alexa_skill.invoke(request_envelope=request_envelope, context=None)
+        response_envelope = alexa_skill.invoke(request_envelope=request_envelope, context=None)
 
-        return jsonify(response)
+        # Serialize the ResponseEnvelope back to JSON dict
+        response_dict = alexa_serializer.serialize(response_envelope)
+
+        return jsonify(json.loads(response_dict))
 
     except Exception as e:
         log_error("Error processing Alexa request", e)

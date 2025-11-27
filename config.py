@@ -47,6 +47,10 @@ class Config:
     # Content Filtering
     LANGUAGE_FILTER: list[str]  # List of ISO 639-1 language codes (e.g., ['en', 'es'])
 
+    # Home Assistant Integration
+    HA_WEBHOOK_SECRET: Optional[str]  # Optional webhook authentication secret
+    HA_ENABLED: bool  # Enable/disable Home Assistant integration
+
     @classmethod
     def load(cls) -> None:
         """Load and validate all configuration"""
@@ -84,6 +88,10 @@ class Config:
         language_filter_str = os.getenv("LANGUAGE_FILTER", "en")
         cls.LANGUAGE_FILTER = [lang.strip().lower() for lang in language_filter_str.split(",") if lang.strip()]
 
+        # Home Assistant Integration
+        cls.HA_ENABLED = os.getenv("HA_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+        cls.HA_WEBHOOK_SECRET = os.getenv("HA_WEBHOOK_SECRET")
+
         # Validate configuration
         cls._validate()
 
@@ -93,6 +101,7 @@ class Config:
             "database": cls.DATABASE_URL.split("://")[0],  # Just show db type
             "session_ttl_hours": cls.SESSION_TTL_HOURS,
             "language_filter": cls.LANGUAGE_FILTER,
+            "ha_enabled": cls.HA_ENABLED,
         })
 
     @classmethod

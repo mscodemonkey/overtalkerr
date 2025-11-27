@@ -2,7 +2,7 @@
 
 Request movies and TV shows using **Alexa**, **Siri**, or **Home Assistant**! 🎙️
 
-> **⚠️ Google Assistant Note**: Google deprecated Conversational Actions in June 2023, ending support for third-party voice apps. To use "Hey Google" with Overtalkerr, set up [Home Assistant Assist integration](docs/how_to_setup_home_assistant.md) which works with Google Assistant.
+> **⚠️ Google Assistant Note**: Google deprecated Conversational Actions in June 2023, ending support for third-party voice apps. "Hey Google" conversational routing through Home Assistant does NOT work reliably. For voice control, use Alexa, Siri, or Home Assistant's local voice assistant (Wyoming/Piper/Whisper).
 
 > **💡 Setup Required**: Overtalkerr requires some effort to set up (configuring voice assistants, API keys, and your media backend) - but it's definitely worth it! Once configured, you'll have a powerful hands-free way to request media across all your devices. Follow our step-by-step guides to get started.
 
@@ -22,9 +22,9 @@ A self-hostable multi-platform voice assistant backend that works with **Oversee
 - "Hey Siri, Overtalkerr"
 - "Download the upcoming TV show Robin Hood"
 
-**🏠 Home Assistant (includes "Hey Google" support):**
-- "Hey Google, download Inception" (via Home Assistant)
-- "Request Breaking Bad season 2"
+**🏠 Home Assistant:**
+- Works via HA app/web interface or local voice (Wyoming/Piper/Whisper)
+- Note: "Hey Google" conversational routing not supported due to Google limitations
 
 The backend automatically detects your media request service (Overseerr, Jellyseerr, or Ombi) and uses the appropriate API to search titles and create requests. It confirms the best match, lets you say Yes/No to iterate through results (filtered by media type, year, season, and prioritizing upcoming releases), and submits the request.
 
@@ -376,12 +376,12 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 | Visual Cards | ✅ | ❌ | ❌ |
 | Multi-turn Dialog | ✅ | ⚠️ (requires setup) | ✅ |
 | Review Process | Required | None | None |
-| Works with "Hey Google" | ❌ | ❌ | ✅ (via HA Google integration) |
+| Works with "Hey Google" | ❌ | ❌ | ❌ (Google limitation) |
 | Works Offline | ❌ | ❌ | ⚠️ (with local STT/TTS) |
 
 **Recommendation:** Set them all up! They use the same backend, so once you've got Overtalkerr configured with your media backend, adding additional voice platforms is straightforward.
 
-**For "Hey Google" users:** Use the Home Assistant integration - it's the only way to get "Hey Google" working with Overtalkerr since Google deprecated third-party voice actions in 2023.
+**For "Hey Google" users:** Unfortunately, Google's deprecation of Conversational Actions means "Hey Google" voice control does not work with Overtalkerr. Consider using Alexa, Siri, or Home Assistant's local voice assistant instead.
 
 ## How it works
 

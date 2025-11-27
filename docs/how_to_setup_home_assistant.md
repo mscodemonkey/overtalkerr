@@ -2,13 +2,14 @@
 
 Want to request movies and TV shows through your Home Assistant voice assistant? Perfect! This guide will show you how to connect Overtalkerr to Home Assistant Assist. 🏠🎬
 
+> **⚠️ IMPORTANT - Google Assistant Limitation**: While Google Assistant CAN be connected to Home Assistant via Nabu Casa, the conversational routing ("Hey Google, ask Home Assistant to...") **does not work reliably** due to Google's limitations. For "Hey Google" voice control, you'll need to use the Home Assistant app or web interface directly, OR set up a local voice assistant (Wyoming/Piper/Whisper) instead. Direct "Hey Google" integration is NOT currently functional.
+
 ## What You'll Need
 
 Before we get started, make sure you have:
 
 - **Home Assistant** installed and running (version 2023.1 or newer recommended)
 - **HACS** (Home Assistant Community Store) installed for easy integration management
-- **Home Assistant Assist** configured with a voice assistant (like Wyoming Protocol, Piper, Whisper, etc.)
 - **Your Overtalkerr URL** - Something like `http://overtalkerr.local:5000` or `https://overtalkerr.yourdomain.com`
 
 > **💡 Quick Check**: Open a browser and navigate to your Overtalkerr URL - if you see the dashboard, you're good to go!
@@ -22,9 +23,108 @@ Home Assistant Assist is the built-in voice assistant platform in Home Assistant
 **Instead of saying:** "Turn on the living room lights"
 **You can now say:** "Download The Matrix" or "Find Breaking Bad season 2"
 
+**Home Assistant Assist works with multiple voice platforms:**
+- Local voice processing (Wyoming Protocol, Piper, Whisper, etc.)
+- **Google Assistant** (via Home Assistant Cloud or manual integration)
+- Alexa (via Home Assistant Cloud)
+- Custom wake words and devices
+
 ---
 
-## Step 1: Install the Webhook-Conversation Integration
+## Step 1: Set Up Your Voice Assistant with Home Assistant
+
+First, you need to connect a voice assistant to Home Assistant. Choose the option that works best for you:
+
+### Option A: Google Assistant (for "Hey Google")
+
+Want to say "Hey Google, download Inception"? You need to connect Google Assistant to Home Assistant first.
+
+#### Via Home Assistant Cloud (Easiest) ⭐
+
+**Cost:** $6.50/month | **Setup Time:** 5 minutes
+
+1. Go to **Settings** → **Home Assistant Cloud**
+2. Sign up or log in to [Nabu Casa](https://www.nabucasa.com/)
+3. Under **Google Assistant**, click **Configure**
+4. Follow the prompts to link your Google account
+5. Done! You can now say "Hey Google, ask Home Assistant to [command]"
+
+**Benefits:**
+- No complex configuration needed
+- Automatic SSL/remote access
+- Supports Home Assistant development
+- Works anywhere (not just local network)
+
+#### Via Manual Integration (Free but Complex)
+
+**Cost:** Free | **Setup Time:** 30-60 minutes
+
+If you prefer not to pay for Home Assistant Cloud, you can manually integrate Google Assistant:
+
+1. Follow the official [Home Assistant Google Assistant integration guide](https://www.home-assistant.io/integrations/google_assistant/)
+2. You'll need to:
+   - Create a Google Cloud Console project
+   - Set up OAuth credentials
+   - Configure Actions on Google
+   - Expose your Home Assistant instance to the internet (requires domain + SSL)
+
+**Note:** This is significantly more technical and requires maintaining your own infrastructure.
+
+---
+
+### Option B: Local Voice Assistant (No Cloud Required)
+
+Want fully local voice control without cloud services? Set up Wyoming Protocol with Piper (TTS) and Whisper (STT):
+
+1. Install **Piper** (text-to-speech) from HACS or add-on store
+2. Install **Whisper** (speech-to-text) from HACS or add-on store
+3. Go to **Settings** → **Voice Assistants**
+4. Click **+ Add Assistant**
+5. Configure:
+   - **Speech-to-Text**: Whisper
+   - **Text-to-Speech**: Piper
+   - **Wake word**: (optional) Configure a custom wake word
+6. Click **Create**
+
+You can now use voice commands through Home Assistant devices, ESPHome voice assistants, or the Home Assistant mobile app.
+
+**Guides:**
+- [Wyoming Protocol Setup](https://www.home-assistant.io/integrations/wyoming/)
+- [Piper TTS](https://www.home-assistant.io/integrations/piper/)
+- [Whisper STT](https://www.home-assistant.io/integrations/whisper/)
+
+---
+
+### Option C: Alexa via Home Assistant Cloud
+
+If you have Alexa devices and want to use them with Overtalkerr:
+
+1. Subscribe to [Home Assistant Cloud](https://www.nabucasa.com/) ($6.50/month)
+2. Go to **Settings** → **Home Assistant Cloud**
+3. Under **Alexa**, click **Configure**
+4. Enable the Home Assistant skill in the Alexa app
+5. Link your accounts
+
+Now you can say "Alexa, ask Home Assistant to download Inception"
+
+**Note:** For native Alexa integration (without Home Assistant), see [How to Setup Alexa](how_to_setup_alexa.md) for direct Alexa skill setup.
+
+---
+
+### ✅ Verify Your Voice Assistant Works
+
+Before continuing, test that your voice assistant is working:
+
+1. Go to **Settings** → **Voice Assistants**
+2. Click on your configured assistant
+3. Try the text input box with: "Turn on the living room lights" (or any command)
+4. Make sure you get a response
+
+If it's working, you're ready to connect Overtalkerr!
+
+---
+
+## Step 2: Install the Webhook-Conversation Integration
 
 Overtalkerr connects to Home Assistant via the **webhook-conversation** custom integration. This allows external services to act as conversation agents.
 
@@ -52,7 +152,7 @@ If you don't use HACS:
 
 ---
 
-## Step 2: Configure Your Overtalkerr Webhook URL
+## Step 3: Configure Your Overtalkerr Webhook URL
 
 You need to know your Overtalkerr webhook URL. It follows this format:
 
@@ -74,7 +174,7 @@ To find your URL:
 
 ---
 
-## Step 3: Add Overtalkerr as a Conversation Agent
+## Step 4: Add Overtalkerr as a Conversation Agent
 
 Now let's tell Home Assistant to use Overtalkerr for voice commands.
 
@@ -111,7 +211,7 @@ Then restart Home Assistant.
 
 ---
 
-## Step 4: Set Overtalkerr as Your Default Assistant
+## Step 5: Set Overtalkerr as Your Default Assistant
 
 For Overtalkerr to handle media requests, it needs to be your active conversation agent.
 
@@ -145,11 +245,31 @@ Now you can switch assistants based on what you want to do!
 
 ---
 
-## Step 5: Try It Out!
+## Step 6: Try It Out!
 
-Time to test! Say to your Home Assistant voice assistant:
+Time to test! The command syntax depends on which voice assistant you're using:
 
-**"Download Inception"**
+### If Using Google Assistant:
+
+Say: **"Hey Google, ask Home Assistant to download Inception"**
+
+Or: **"Hey Google, tell Home Assistant to download Inception"**
+
+Google Assistant requires the "ask Home Assistant to" or "tell Home Assistant to" prefix to route commands to Home Assistant.
+
+### If Using Local Voice Assistant (Wyoming/Piper/Whisper):
+
+Simply say: **"Download Inception"**
+
+No prefix needed - commands go directly to your conversation agent.
+
+### If Using Alexa via Home Assistant Cloud:
+
+Say: **"Alexa, ask Home Assistant to download Inception"**
+
+Similar to Google Assistant, Alexa needs the routing prefix.
+
+---
 
 Your assistant should respond with:
 > "I found Inception from 2010. Would you like me to request it?"

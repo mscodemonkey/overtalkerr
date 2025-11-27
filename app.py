@@ -3,9 +3,13 @@ Overtalkerr - Multi-platform voice assistant for Overseerr
 
 Supports:
 - Amazon Alexa (ask-sdk-python)
-- Google Assistant (Dialogflow)
 - Siri Shortcuts (webhook)
+- Home Assistant Assist (webhook-conversation)
 - Web-based test harness
+
+Note: Direct Google Assistant integration via Dialogflow was removed as Google
+deprecated Conversational Actions in June 2023. Use Home Assistant Assist with
+Google Assistant integration for "Hey Google" voice control.
 
 This replaces the deprecated Flask-Ask framework with modern, production-ready code.
 """
@@ -469,6 +473,88 @@ def universal_voice_webhook():
         log_error("Error processing voice request", e)
         return jsonify({
             "speech": "Sorry, I encountered an error processing your request."
+        }), 500
+
+
+# ========================================
+# HOME ASSISTANT ASSIST ENDPOINT
+# ========================================
+
+@app.route('/homeassistant', methods=['POST'])
+def home_assistant_webhook():
+    """
+    Home Assistant Assist endpoint for webhook-conversation integration.
+
+    This endpoint receives requests from the Home Assistant webhook-conversation
+    custom integration, allowing Overtalkerr to function as a conversation agent
+    for Home Assistant Assist.
+
+    Expected request format:
+    {
+        "conversation_id": "abc123",
+        "user_id": "user_xyz",
+        "language": "en",
+        "agent_id": "conversation.overtalkerr",
+        "query": "I want to download Inception",
+        "messages": [...],
+        "exposed_entities": {...}
+    }
+
+    Expected response format:
+    {
+        "output": "Response text to be spoken"
+    }
+    """
+    try:
+        # Check if Home Assistant integration is enabled
+        if not Config.HA_ENABLED:
+            logger.warning("Received Home Assistant request but integration is disabled")
+            return jsonify({
+                "output": "Home Assistant integration is currently disabled."
+            }), 403
+
+        request_data = request.get_json()
+
+        # Verify authentication if webhook secret is configured
+        if Config.HA_WEBHOOK_SECRET:
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or auth_header != f"Bearer {Config.HA_WEBHOOK_SECRET}":
+                logger.warning("Home Assistant request failed authentication")
+                return jsonify({
+                    "output": "Authentication failed."
+                }), 401
+
+        logger.info(f"Received Home Assistant request: {request_data.get('query', '')}")
+
+        # Parse request using Home Assistant adapter
+        voice_request = router.parse_request(request_data)
+
+        if voice_request is None:
+            logger.error("Could not parse Home Assistant request")
+            return jsonify({
+                "output": "Sorry, I couldn't understand your request. Please try again."
+            }), 400
+
+        if voice_request.platform != VoiceAssistantPlatform.HOME_ASSISTANT:
+            logger.warning(f"Request was not detected as Home Assistant (detected as {voice_request.platform.value})")
+            # Continue anyway - the adapter might have worked
+
+        logger.info(f"Processing Home Assistant request - Intent: {voice_request.intent_name}, Slots: {voice_request.slots}")
+
+        # Handle with unified handler
+        voice_response = unified_handler.route_intent(voice_request)
+
+        # Build Home Assistant-specific response
+        platform_response = router.build_response(voice_response, VoiceAssistantPlatform.HOME_ASSISTANT)
+
+        logger.info(f"Sending Home Assistant response: {platform_response.get('output', '')[:100]}...")
+
+        return jsonify(platform_response)
+
+    except Exception as e:
+        log_error("Error processing Home Assistant request", e)
+        return jsonify({
+            "output": "Sorry, I encountered an error processing your request. Please try again later."
         }), 500
 
 
@@ -945,10 +1031,11 @@ if __name__ == '__main__':
 
     # Start Flask app
     debug_mode = Config.FLASK_ENV == 'development'
-    logger.info(f"Starting Overtalkerr in {Config.FLASK_ENV} mode")
+    port = int(os.getenv('PORT', 5000))
+    logger.info(f"Starting Overtalkerr in {Config.FLASK_ENV} mode on port {port}")
 
     app.run(
         host='0.0.0.0',
-        port=5000,
+        port=port,
         debug=debug_mode
     )

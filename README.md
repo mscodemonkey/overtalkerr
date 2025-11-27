@@ -1,6 +1,8 @@
 # Overtalkerr - Universal Voice Assistant for Media Requests
 
-Request movies and TV shows using **Alexa**, **Google Assistant**, or **Siri**! 🎙️
+Request movies and TV shows using **Alexa**, **Siri**, or **Home Assistant**! 🎙️
+
+> **⚠️ Google Assistant Note**: Google deprecated Conversational Actions in June 2023, ending support for third-party voice apps. To use "Hey Google" with Overtalkerr, set up [Home Assistant Assist integration](docs/how_to_setup_home_assistant.md) which works with Google Assistant.
 
 > **💡 Setup Required**: Overtalkerr requires some effort to set up (configuring voice assistants, API keys, and your media backend) - but it's definitely worth it! Once configured, you'll have a powerful hands-free way to request media across all your devices. Follow our step-by-step guides to get started.
 
@@ -16,13 +18,13 @@ A self-hostable multi-platform voice assistant backend that works with **Oversee
 - "Alexa, ask Overtalkerr to download Jurassic World"
 - "Alexa, ask Overtalkerr to download season 2 of Breaking Bad"
 
-**🔴 Google Assistant:**
-- "Hey Google, talk to Overtalkerr"
-- "Download the movie Jurassic World from 2015"
-
 **⚪ Siri:**
 - "Hey Siri, Overtalkerr"
 - "Download the upcoming TV show Robin Hood"
+
+**🏠 Home Assistant (includes "Hey Google" support):**
+- "Hey Google, download Inception" (via Home Assistant)
+- "Request Breaking Bad season 2"
 
 The backend automatically detects your media request service (Overseerr, Jellyseerr, or Ombi) and uses the appropriate API to search titles and create requests. It confirms the best match, lets you say Yes/No to iterate through results (filtered by media type, year, season, and prioritizing upcoming releases), and submits the request.
 
@@ -30,8 +32,8 @@ The backend automatically detects your media request service (Overseerr, Jellyse
 
 ### Voice Platforms
 - **Amazon Alexa** - Full skill support with ask-sdk-python
-- **Google Assistant** - Dialogflow integration
 - **Siri Shortcuts** - iOS/macOS webhook support
+- **Home Assistant Assist** - Webhook-based conversation agent integration (works with "Hey Google", Alexa, and other assistants)
 - **Platform-Agnostic** - Unified business logic across all platforms
 
 ### Supported Media Request Backends
@@ -295,7 +297,7 @@ services:
 
 Overtalkerr supports three major voice platforms. Choose the one(s) you want to use:
 
-### 🔵 Amazon Alexa (Recommended)
+### 🔵 Amazon Alexa
 
 **Powered by:** ask-sdk-python (modern SDK)
 **Endpoint:** `https://your-domain.com/alexa` (POST)
@@ -315,31 +317,6 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 - ✅ Request verification
 
 📚 **[Complete Alexa Setup Guide](docs/how_to_setup_alexa.md)** - Step-by-step instructions with troubleshooting
-
----
-
-### 🔴 Google Assistant
-
-**Powered by:** Dialogflow
-**Endpoint:** `https://your-domain.com/voice` (POST)
-
-1. **Create Agent** in [Dialogflow Console](https://dialogflow.cloud.google.com/)
-2. **Configure Intents**:
-   - DownloadIntent (with parameters: MediaTitle, Year, MediaType, Season)
-   - YesIntent
-   - NoIntent
-3. **Enable Fulfillment**:
-   - Webhook URL: `https://your-domain.com/voice`
-4. **Test in Actions Console**
-5. **Deploy** to Google Assistant
-
-**Features Supported:**
-- ✅ Full conversational flow
-- ✅ Season selection
-- ✅ Suggestion chips (Yes/No buttons)
-- ✅ Rich cards
-
-📚 **[Complete Google Assistant Setup Guide](docs/how_to_setup_google_assistant.md)** - Detailed walkthrough with examples
 
 ---
 
@@ -367,21 +344,44 @@ Overtalkerr supports three major voice platforms. Choose the one(s) you want to 
 
 ---
 
+### 🏠 Home Assistant Assist
+
+**Powered by:** Webhook-Conversation Integration
+**Endpoint:** `http://your-server:5000/homeassistant` (POST)
+
+1. **Install Integration** via HACS:
+   - Add custom repository: `https://github.com/EuleMitKeule/webhook-conversation`
+   - Install **Webhook Conversation**
+2. **Configure Agent**:
+   - Settings → Devices & Services → Add Integration → Webhook Conversation
+   - Name: `Overtalkerr`
+   - Webhook URL: `http://your-overtalkerr:5000/homeassistant`
+3. **Set as Default** (optional):
+   - Settings → Voice Assistants → Select Overtalkerr as conversation agent
+4. **Test**: "Download Inception"
+
+📚 **[Complete Home Assistant Setup Guide](docs/how_to_setup_home_assistant.md)** - Full walkthrough with authentication and troubleshooting
+
+---
+
 ### Platform Comparison
 
-| Feature | Alexa | Google | Siri |
-|---------|-------|--------|------|
-| Setup Difficulty | Medium | Medium | Easy |
-| Conversational Flow | Excellent | Excellent | Manual |
+| Feature | Alexa | Siri | Home Assistant |
+|---------|-------|------|----------------|
+| Setup Difficulty | Medium | Easy | Easy |
+| Conversational Flow | Excellent | Manual | Excellent |
 | Season Selection | ✅ | ✅ | ✅ |
 | Year Filtering | ✅ | ✅ | ✅ |
 | Upcoming Releases | ✅ | ✅ | ✅ |
-| Visual Cards | ✅ | ✅ | ❌ |
-| Multi-turn Dialog | ✅ | ✅ | ⚠️ (requires setup) |
-| Review Process | Required | Required | None |
-| Works Offline | ❌ | ❌ | ❌ |
+| Visual Cards | ✅ | ❌ | ❌ |
+| Multi-turn Dialog | ✅ | ⚠️ (requires setup) | ✅ |
+| Review Process | Required | None | None |
+| Works with "Hey Google" | ❌ | ❌ | ✅ (via HA Google integration) |
+| Works Offline | ❌ | ❌ | ⚠️ (with local STT/TTS) |
 
-**Recommendation:** Set up all three! They use the same backend, so there's no extra work once configured.
+**Recommendation:** Set them all up! They use the same backend, so once you've got Overtalkerr configured with your media backend, adding additional voice platforms is straightforward.
+
+**For "Hey Google" users:** Use the Home Assistant integration - it's the only way to get "Hey Google" working with Overtalkerr since Google deprecated third-party voice actions in 2023.
 
 ## How it works
 

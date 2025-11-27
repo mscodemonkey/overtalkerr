@@ -411,6 +411,52 @@
         </div>
       </div>
 
+      <!-- Home Assistant Integration -->
+      <div class="section">
+        <div class="section-title">🏠 Home Assistant Integration</div>
+
+        <div class="alert alert-info" style="display: block; margin-bottom: 15px;">
+          <strong>💡 About Home Assistant Assist:</strong> Connect Overtalkerr to Home Assistant Assist as a conversation agent using the webhook-conversation custom integration. This allows you to request media through voice commands to your Home Assistant voice assistant.
+        </div>
+
+        <div class="form-group">
+          <label for="haEnabled">Enable Home Assistant</label>
+          <div class="toggle-container">
+            <div class="toggle" id="haToggle" onclick="toggleHA()" tabindex="0" role="switch" aria-checked="true" aria-labelledby="haLabel" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleHA();}"></div>
+            <span id="haLabel">Enabled</span>
+            <input type="hidden" id="haEnabled" name="HA_ENABLED" value="true">
+          </div>
+          <span class="help-text">Enable or disable the Home Assistant webhook endpoint</span>
+        </div>
+
+        <div class="form-group">
+          <label for="haWebhookSecret">Webhook Secret (Optional)</label>
+          <div class="password-toggle">
+            <input type="password" id="haWebhookSecret" name="HA_WEBHOOK_SECRET" placeholder="Leave empty for no authentication" aria-describedby="ha-secret-help">
+            <button type="button" class="password-toggle-btn" onclick="togglePassword('haWebhookSecret')" aria-label="Toggle webhook secret visibility" aria-pressed="false">Show</button>
+          </div>
+          <span id="ha-secret-help" class="help-text">
+            Optional Bearer token for webhook authentication. If set, Home Assistant must include this in the Authorization header.<br>
+            <strong>Example:</strong> Authorization: Bearer your-secret-here<br>
+            Leave empty if Overtalkerr is only accessible within your local network.
+          </span>
+        </div>
+
+        <div class="alert alert-info" style="display: block;">
+          <strong>📍 Webhook URL:</strong><br>
+          <code id="haWebhookUrl">http://your-server:5000/homeassistant</code><br>
+          <small>Use this URL in the Home Assistant webhook-conversation integration configuration.</small>
+        </div>
+
+        <div class="alert alert-info" style="display: block; margin-top: 10px;">
+          <strong>📖 Setup Instructions:</strong><br>
+          1. Install the <a href="https://github.com/EuleMitKeule/webhook-conversation" target="_blank" rel="noopener" style="color: #667eea;">webhook-conversation</a> custom integration in Home Assistant<br>
+          2. Configure a new conversation agent with the webhook URL above<br>
+          3. Set the conversation agent as your default assistant in Home Assistant<br>
+          4. Say "Hey [assistant name], download Inception" to test!
+        </div>
+      </div>
+
       <div class="button-group" role="group" aria-label="Form actions">
         <button type="button" class="btn-secondary" onclick="loadConfig()" aria-label="Reload configuration from server">🔄 Reload</button>
         <button type="submit" class="btn-primary" aria-label="Save configuration">💾 Save</button>
@@ -455,6 +501,17 @@
         document.getElementById('mockBackend').value = mockEnabled ? 'true' : 'false';
         document.getElementById('mockToggle').classList.toggle('active', mockEnabled);
         document.getElementById('mockLabel').textContent = mockEnabled ? 'Enabled' : 'Disabled';
+
+        // Home Assistant integration
+        const haEnabled = config.HA_ENABLED !== 'false';
+        document.getElementById('haEnabled').value = haEnabled ? 'true' : 'false';
+        document.getElementById('haToggle').classList.toggle('active', haEnabled);
+        document.getElementById('haLabel').textContent = haEnabled ? 'Enabled' : 'Disabled';
+        document.getElementById('haWebhookSecret').value = config.HA_WEBHOOK_SECRET || '';
+
+        // Update webhook URL based on current location
+        const webhookUrl = `${window.location.protocol}//${window.location.host}/homeassistant`;
+        document.getElementById('haWebhookUrl').textContent = webhookUrl;
 
         showAlert('Configuration loaded successfully', 'success');
       } catch (error) {
@@ -587,6 +644,17 @@
       const toggle = document.getElementById('mockToggle');
       const label = document.getElementById('mockLabel');
       const input = document.getElementById('mockBackend');
+
+      const isActive = toggle.classList.toggle('active');
+      label.textContent = isActive ? 'Enabled' : 'Disabled';
+      input.value = isActive ? 'true' : 'false';
+      toggle.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    }
+
+    function toggleHA() {
+      const toggle = document.getElementById('haToggle');
+      const label = document.getElementById('haLabel');
+      const input = document.getElementById('haEnabled');
 
       const isActive = toggle.classList.toggle('active');
       label.textContent = isActive ? 'Enabled' : 'Disabled';

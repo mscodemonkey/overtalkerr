@@ -1,8 +1,12 @@
 """
 Universal voice assistant adapter supporting multiple platforms:
 - Amazon Alexa (ask-sdk-python)
-- Google Assistant (Actions on Google / Dialogflow)
 - Siri Shortcuts (webhook-based)
+- Home Assistant Assist (webhook-based conversation agent)
+
+Note: Google Assistant (Dialogflow) support was removed as Google deprecated
+Conversational Actions in June 2023. Use Home Assistant Assist with Google
+Assistant integration as an alternative.
 
 This module provides a unified interface for handling requests from different platforms.
 """
@@ -17,8 +21,8 @@ from logger import logger
 class VoiceAssistantPlatform(Enum):
     """Supported voice assistant platforms"""
     ALEXA = "alexa"
-    GOOGLE = "google"
     SIRI = "siri"
+    HOME_ASSISTANT = "homeassistant"
     UNKNOWN = "unknown"
 
 
@@ -138,82 +142,6 @@ class AlexaAdapter(VoiceAssistantAdapter):
         return response
 
 
-class GoogleAssistantAdapter(VoiceAssistantAdapter):
-    """Adapter for Google Assistant (Dialogflow) requests"""
-
-    def detect_platform(self, request_data: Dict[str, Any]) -> bool:
-        """Detect Google Assistant request"""
-        return (
-            'queryResult' in request_data or
-            'responseId' in request_data or
-            'originalDetectIntentRequest' in request_data
-        )
-
-    def parse_request(self, request_data: Dict[str, Any]) -> VoiceRequest:
-        """Parse Google Assistant request"""
-        query_result = request_data.get('queryResult', {})
-        original_request = request_data.get('originalDetectIntentRequest', {})
-
-        # Extract user ID from payload
-        payload = original_request.get('payload', {})
-        user = payload.get('user', {})
-        user_id = user.get('userId', 'unknown')
-
-        session = request_data.get('session', 'unknown')
-        session_id = session.split('/')[-1] if session else 'unknown'
-
-        # Extract intent and parameters
-        intent = query_result.get('intent', {})
-        intent_name = intent.get('displayName', 'Unknown')
-
-        parameters = query_result.get('parameters', {})
-        slots = {k: str(v) if v else None for k, v in parameters.items()}
-
-        return VoiceRequest(
-            platform=VoiceAssistantPlatform.GOOGLE,
-            user_id=user_id,
-            session_id=session_id,
-            intent_name=intent_name,
-            slots=slots,
-            raw_request=request_data
-        )
-
-    def build_response(self, voice_response: VoiceResponse) -> Dict[str, Any]:
-        """Build Google Assistant response"""
-        response = {
-            'fulfillmentText': voice_response.speech,
-            'fulfillmentMessages': [
-                {
-                    'text': {
-                        'text': [voice_response.speech]
-                    }
-                }
-            ]
-        }
-
-        # Add suggestion chips if there's a reprompt
-        if voice_response.reprompt and not voice_response.should_end_session:
-            response['fulfillmentMessages'].append({
-                'suggestions': {
-                    'suggestions': [
-                        {'title': 'Yes'},
-                        {'title': 'No'}
-                    ]
-                }
-            })
-
-        # Add basic card if specified
-        if voice_response.card_title and voice_response.card_text:
-            response['fulfillmentMessages'].append({
-                'card': {
-                    'title': voice_response.card_title,
-                    'subtitle': voice_response.card_text
-                }
-            })
-
-        return response
-
-
 class SiriShortcutsAdapter(VoiceAssistantAdapter):
     """Adapter for Siri Shortcuts (webhook-based)"""
 
@@ -272,14 +200,193 @@ class SiriShortcutsAdapter(VoiceAssistantAdapter):
         return response
 
 
+class HomeAssistantAdapter(VoiceAssistantAdapter):
+    """Adapter for Home Assistant Assist (webhook-based conversation agent)"""
+
+    def detect_platform(self, request_data: Dict[str, Any]) -> bool:
+        """
+        Detect Home Assistant request by checking for webhook-conversation structure.
+        Home Assistant sends: conversation_id, user_id, language, query, exposed_entities, etc.
+        """
+        return (
+            'conversation_id' in request_data and
+            'query' in request_data and
+            ('exposed_entities' in request_data or 'agent_id' in request_data)
+        )
+
+    def parse_request(self, request_data: Dict[str, Any]) -> VoiceRequest:
+        """
+        Parse Home Assistant webhook-conversation request.
+
+        Expected format:
+        {
+            "conversation_id": "abc123",
+            "user_id": "user_xyz",
+            "language": "en",
+            "agent_id": "conversation.overtalkerr",
+            "query": "I want to download Inception",
+            "messages": [...],  # conversation history
+            "exposed_entities": {...}  # available smart home entities
+        }
+        """
+        user_id = request_data.get('user_id', 'ha-user')
+        session_id = request_data.get('conversation_id', f"ha-{user_id}")
+        query = request_data.get('query', '')
+
+        # Parse the query to extract intent and slots
+        # For now, we'll use a simple heuristic:
+        # - If query starts with launch-type words: LaunchIntent
+        # - If contains "yes", "yeah", "yep", etc: YesIntent
+        # - If contains "no", "nope", "nah", etc: NoIntent
+        # - If contains "help": HelpIntent
+        # - If contains "cancel", "stop", "exit": CancelIntent
+        # - Otherwise: DownloadIntent with the query as MediaTitle
+
+        query_lower = query.lower().strip()
+
+        # Detect intent from query
+        if not query_lower or query_lower in ['open overtalkerr', 'start overtalkerr', 'launch overtalkerr', 'hey overtalkerr']:
+            intent_name = 'LaunchIntent'
+            slots = {}
+        elif query_lower in ['yes', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 'correct', 'right', 'that one']:
+            intent_name = 'YesIntent'
+            slots = {}
+        elif query_lower in ['no', 'nope', 'nah', 'not that one', 'wrong', 'next', 'next one', 'another', 'different']:
+            intent_name = 'NoIntent'
+            slots = {}
+        elif 'help' in query_lower:
+            intent_name = 'HelpIntent'
+            slots = {}
+        elif any(word in query_lower for word in ['cancel', 'stop', 'exit', 'quit', 'nevermind', 'never mind']):
+            intent_name = 'CancelIntent'
+            slots = {}
+        else:
+            # Default to DownloadIntent - parse media request
+            intent_name = 'DownloadIntent'
+            slots = self._extract_slots_from_query(query)
+
+        return VoiceRequest(
+            platform=VoiceAssistantPlatform.HOME_ASSISTANT,
+            user_id=user_id,
+            session_id=session_id,
+            intent_name=intent_name,
+            slots=slots,
+            raw_request=request_data
+        )
+
+    def _extract_slots_from_query(self, query: str) -> Dict[str, Optional[str]]:
+        """
+        Extract media request slots from natural language query.
+
+        Examples:
+        - "download Inception" -> {"MediaTitle": "Inception"}
+        - "I want to watch The Office season 3" -> {"MediaTitle": "The Office", "Season": "3"}
+        - "find movies from 2020" -> {"Year": "2020"}
+        - "upcoming movie called Dune" -> {"MediaTitle": "Dune", "Upcoming": "true"}
+        """
+        slots = {}
+        query_lower = query.lower()
+
+        # Remove common prefixes
+        prefixes = [
+            'download ', 'request ', 'i want to download ', 'i want to watch ',
+            'i want to see ', 'find ', 'search for ', 'get ', 'add ',
+            'can you download ', 'can you find ', 'can you get ',
+            'please download ', 'please find ', 'please get '
+        ]
+
+        cleaned_query = query
+        for prefix in prefixes:
+            if query_lower.startswith(prefix):
+                cleaned_query = query[len(prefix):].strip()
+                break
+
+        # Detect media type
+        if any(word in query_lower for word in [' show', ' series', ' tv ', ' season', ' episode']):
+            slots['MediaType'] = 'tv'
+        elif any(word in query_lower for word in [' movie', ' film']):
+            slots['MediaType'] = 'movie'
+
+        # Extract season number
+        import re
+        season_match = re.search(r'season\s+(\d+)', query_lower)
+        if season_match:
+            slots['Season'] = season_match.group(1)
+            # Remove season mention from title
+            cleaned_query = re.sub(r'\s*season\s+\d+', '', cleaned_query, flags=re.IGNORECASE).strip()
+
+        # Extract year
+        year_match = re.search(r'\b(19\d{2}|20\d{2})\b', query)
+        if year_match:
+            slots['Year'] = year_match.group(1)
+            # Remove year from title
+            cleaned_query = cleaned_query.replace(year_match.group(0), '').strip()
+
+        # Detect upcoming
+        if any(word in query_lower for word in ['upcoming', 'unreleased', 'not out yet', 'coming soon']):
+            slots['Upcoming'] = 'true'
+            # Remove upcoming mentions
+            cleaned_query = re.sub(r'\b(upcoming|unreleased|not out yet|coming soon)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
+
+        # Remove media type words from title
+        cleaned_query = re.sub(r'\b(movie|film|show|series|tv)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
+
+        # Remove common words
+        cleaned_query = re.sub(r'\b(called|named|titled)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
+
+        # Remove "from" when used with year
+        cleaned_query = re.sub(r'\bfrom\b', '', cleaned_query, flags=re.IGNORECASE).strip()
+
+        # Clean up multiple spaces
+        cleaned_query = re.sub(r'\s+', ' ', cleaned_query).strip()
+
+        # The remaining text is the media title
+        if cleaned_query:
+            slots['MediaTitle'] = cleaned_query
+
+        return slots
+
+    def build_response(self, voice_response: VoiceResponse) -> Dict[str, Any]:
+        """
+        Build Home Assistant webhook-conversation response.
+
+        Expected response format:
+        {
+            "output": "The response text that will be spoken"
+        }
+
+        For streaming responses (not currently implemented):
+        {"type": "item", "content": "text chunk"}
+        {"type": "end"}
+        """
+        # Home Assistant expects a simple response with "output" field
+        # The webhook-conversation integration handles this
+        response = {
+            'output': voice_response.speech
+        }
+
+        # Add additional metadata if needed
+        if voice_response.card_title:
+            response['title'] = voice_response.card_title
+
+        if voice_response.card_text:
+            response['details'] = voice_response.card_text
+
+        # Indicate if conversation should continue
+        # (Home Assistant will keep the conversation active if needed)
+        response['end_conversation'] = voice_response.should_end_session
+
+        return response
+
+
 class VoiceAssistantRouter:
     """Routes requests to appropriate adapter"""
 
     def __init__(self):
         self.adapters = [
             AlexaAdapter(),
-            GoogleAssistantAdapter(),
-            SiriShortcutsAdapter()
+            SiriShortcutsAdapter(),
+            HomeAssistantAdapter()
         ]
 
     def detect_platform(self, request_data: Dict[str, Any]) -> Tuple[VoiceAssistantPlatform, Optional[VoiceAssistantAdapter]]:
@@ -289,10 +396,10 @@ class VoiceAssistantRouter:
                 platform = None
                 if isinstance(adapter, AlexaAdapter):
                     platform = VoiceAssistantPlatform.ALEXA
-                elif isinstance(adapter, GoogleAssistantAdapter):
-                    platform = VoiceAssistantPlatform.GOOGLE
                 elif isinstance(adapter, SiriShortcutsAdapter):
                     platform = VoiceAssistantPlatform.SIRI
+                elif isinstance(adapter, HomeAssistantAdapter):
+                    platform = VoiceAssistantPlatform.HOME_ASSISTANT
 
                 logger.info(f"Detected platform: {platform.value if platform else 'unknown'}")
                 return platform, adapter
@@ -319,9 +426,9 @@ class VoiceAssistantRouter:
         for adapter in self.adapters:
             if isinstance(adapter, AlexaAdapter) and platform == VoiceAssistantPlatform.ALEXA:
                 return adapter.build_response(voice_response)
-            elif isinstance(adapter, GoogleAssistantAdapter) and platform == VoiceAssistantPlatform.GOOGLE:
-                return adapter.build_response(voice_response)
             elif isinstance(adapter, SiriShortcutsAdapter) and platform == VoiceAssistantPlatform.SIRI:
+                return adapter.build_response(voice_response)
+            elif isinstance(adapter, HomeAssistantAdapter) and platform == VoiceAssistantPlatform.HOME_ASSISTANT:
                 return adapter.build_response(voice_response)
 
         # Fallback to basic response

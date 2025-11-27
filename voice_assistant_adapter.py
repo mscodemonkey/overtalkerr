@@ -301,10 +301,10 @@ class HomeAssistantAdapter(VoiceAssistantAdapter):
                 cleaned_query = query[len(prefix):].strip()
                 break
 
-        # Detect media type
-        if any(word in query_lower for word in [' show', ' series', ' tv ', ' season', ' episode']):
+        # Detect media type (including patterns like "the movie" or "the tv show")
+        if any(word in query_lower for word in ['the tv show', 'the show', 'the series', ' show', ' series', ' tv ', ' season', ' episode']):
             slots['MediaType'] = 'tv'
-        elif any(word in query_lower for word in [' movie', ' film']):
+        elif any(word in query_lower for word in ['the movie', 'the film', ' movie', ' film']):
             slots['MediaType'] = 'movie'
 
         # Extract season number
@@ -328,10 +328,13 @@ class HomeAssistantAdapter(VoiceAssistantAdapter):
             # Remove upcoming mentions
             cleaned_query = re.sub(r'\b(upcoming|unreleased|not out yet|coming soon)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
 
-        # Remove media type words from title
+        # Remove media type phrases (including "the movie", "a movie called", etc.)
+        # Order matters - remove longer phrases first
+        cleaned_query = re.sub(r'\b(the|a|an)\s+(movie|film|tv\s+show|show|series)\s+(called|named|titled)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
+        cleaned_query = re.sub(r'\b(the|a|an)\s+(movie|film|tv\s+show|show|series)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
         cleaned_query = re.sub(r'\b(movie|film|show|series|tv)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
 
-        # Remove common words
+        # Remove remaining "called/named/titled" if still present
         cleaned_query = re.sub(r'\b(called|named|titled)\b', '', cleaned_query, flags=re.IGNORECASE).strip()
 
         # Remove "from" when used with year

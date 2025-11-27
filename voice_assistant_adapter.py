@@ -340,6 +340,9 @@ class HomeAssistantAdapter(VoiceAssistantAdapter):
         # Remove "from" when used with year
         cleaned_query = re.sub(r'\bfrom\b', '', cleaned_query, flags=re.IGNORECASE).strip()
 
+        # Remove leading articles (the, a, an) that might be left over
+        cleaned_query = re.sub(r'^\b(the|a|an)\b\s*', '', cleaned_query, flags=re.IGNORECASE).strip()
+
         # Clean up multiple spaces
         cleaned_query = re.sub(r'\s+', ' ', cleaned_query).strip()
 

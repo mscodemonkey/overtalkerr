@@ -359,22 +359,11 @@ class HomeAssistantAdapter(VoiceAssistantAdapter):
         {"type": "item", "content": "text chunk"}
         {"type": "end"}
         """
-        # Home Assistant expects a simple response with "output" field
-        # The webhook-conversation integration handles this
+        # Home Assistant webhook-conversation expects ONLY the "output" field
+        # Extra fields may cause parsing errors in some versions
         response = {
             'output': voice_response.speech
         }
-
-        # Add additional metadata if needed
-        if voice_response.card_title:
-            response['title'] = voice_response.card_title
-
-        if voice_response.card_text:
-            response['details'] = voice_response.card_text
-
-        # Indicate if conversation should continue
-        # (Home Assistant will keep the conversation active if needed)
-        response['end_conversation'] = voice_response.should_end_session
 
         return response
 

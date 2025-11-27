@@ -89,8 +89,10 @@ Now let's tell Home Assistant to use Overtalkerr for voice commands.
    - **Webhook URL**: `http://your-server:5000/homeassistant` (your Overtalkerr URL)
    - **Output Field**: `output` (default - don't change)
    - **Timeout**: `30` seconds (default is fine)
-   - **Response Streaming**: Leave unchecked (optional feature)
+   - **Response Streaming**: **MUST be UNCHECKED** ⚠️ (streaming is not supported)
 6. Click **Submit**
+
+> **⚠️ Important:** Make sure "Enable response streaming" is **unchecked**. This checkbox is sometimes checked by default, but Overtalkerr does not support streaming responses. Leaving it enabled will cause "Unable to get response" errors.
 
 ### Via YAML (Advanced)
 
@@ -117,8 +119,11 @@ For Overtalkerr to handle media requests, it needs to be your active conversatio
 
 1. Go to **Settings** → **Voice Assistants**
 2. Click on **Assist** (or your configured assistant)
-3. Under **Conversation agent**, select **Overtalkerr**
-4. Click **Save**
+3. Under **Conversation agent**, select **Overtalkerr Local**
+4. **IMPORTANT**: Make sure **"Prefer handling commands locally"** is **OFF** (unchecked)
+   - This ensures all commands go directly to Overtalkerr
+   - If enabled, Home Assistant will try to handle commands first, causing issues
+5. Click **Save**
 
 Now all voice commands will go through Overtalkerr first.
 
@@ -130,7 +135,8 @@ Want to keep the default Home Assistant assistant for smart home control? Create
 2. Click **+ Add Assistant**
 3. Configure:
    - **Name**: `Media Assistant`
-   - **Conversation agent**: `Overtalkerr`
+   - **Conversation agent**: `Overtalkerr Local`
+   - **Prefer handling commands locally**: **OFF** (unchecked) ⚠️
    - **Text-to-Speech**: Your preferred TTS engine
    - **Speech-to-Text**: Your preferred STT engine
 4. Click **Create**
@@ -266,6 +272,21 @@ Now only authenticated requests will be processed!
 2. Go to the test page (`/test`)
 3. Try the same request manually to see what happens
 
+### "Unable to get response" Error
+
+**Symptoms:** Home Assistant shows "Unable to get response" when testing the conversation agent
+
+**Most Common Cause:** Response streaming is enabled when it shouldn't be
+
+**Fix:**
+1. Go to **Settings** → **Devices & Services**
+2. Find **Webhook Conversation (Overtalkerr)**
+3. Click **Configure**
+4. **Uncheck "Enable response streaming"** ✓
+5. Click **Submit**
+
+**Why this happens:** The streaming checkbox is sometimes checked by default. Overtalkerr sends standard JSON responses, not streaming responses, so this must be disabled.
+
 ### Connection Errors
 
 **Symptoms:** "Unable to reach Overtalkerr" or timeout errors
@@ -275,6 +296,7 @@ Now only authenticated requests will be processed!
 2. Can Home Assistant reach the URL? Check network/firewall
 3. Is the webhook URL correct? Double-check spelling and port
 4. Are you using `http://` vs `https://` correctly?
+5. Use the **local IP address** (e.g., `http://192.168.1.100:5000/homeassistant`) instead of public domain to avoid redirect issues
 
 **Test connectivity:**
 1. In Home Assistant, go to **Developer Tools** → **Services**
@@ -298,8 +320,12 @@ Now only authenticated requests will be processed!
 **Check:**
 1. Is Overtalkerr selected as the conversation agent?
    - **Settings** → **Voice Assistants** → Check the agent setting
-2. Did you restart Home Assistant after adding the integration?
-3. Is the webhook-conversation integration loaded?
+2. Is **"Prefer handling commands locally"** turned OFF?
+   - Go to **Settings** → **Voice Assistants** → Click your assistant
+   - Make sure this toggle is **unchecked** (off)
+   - If enabled, Home Assistant intercepts commands instead of sending them to Overtalkerr
+3. Did you restart Home Assistant after adding the integration?
+4. Is the webhook-conversation integration loaded?
    - **Settings** → **System** → **Logs** - Look for webhook_conversation errors
 
 ---
